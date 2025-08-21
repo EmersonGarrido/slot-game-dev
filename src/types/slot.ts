@@ -23,8 +23,17 @@ export type ComboType =
   | 'kernel_panic'         // 💾💾💾
   | 'deploy_magico'        // 🔧🔧🔧
   | 'overdose_cafe'        // ☕☕☕
+  | 'overdose_cafe_total'  // ☕☕☕☕☕
   | 'blue_screen_total'    // 💀💀💀
   | 'promocao_estagiario'  // 🐞+🔥+🔧 (qualquer ordem)
+  | 'bugs_resolvidos'      // 🐞🐞🐞
+  | 'backup_funcionou'     // 💾💾 + 🔧
+  | 'pequeno_cafe'         // ☕☕
+  | 'pequeno_deploy'       // 🔧🔧
+  | 'pequeno_backup'       // 💾💾
+  | 'quase_blue_screen'    // 💀💀
+  | 'servidor_esquentando' // 🔥🔥
+  | 'sem_combinacao'       // Sem combinações
   | 'neutro'               // Qualquer outra combinação
 
 export interface ComboResult {
