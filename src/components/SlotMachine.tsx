@@ -5,6 +5,8 @@ import SettingsModal from "./SettingsModal";
 import Confetti from "./Confetti";
 import WinExplosion from "./WinExplosion";
 import ElephantSpeechBubble from "./ElephantSpeechBubble";
+import SecretTerminal from "./SecretTerminal";
+import TerminalMode from "./TerminalMode";
 import { evaluateResult, calculatePayout } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
@@ -33,6 +35,7 @@ const SlotMachine = () => {
   const [showWinExplosion, setShowWinExplosion] = useState(false);
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [lastWin, setLastWin] = useState(0);
+  const [terminalMode, setTerminalMode] = useState(false);
 
   const { createProceduralSound } = useSound(soundEnabled, effectsVolume);
   const { setMusicVolume } = useBackgroundMusic(soundEnabled, backgroundVolume);
@@ -64,6 +67,24 @@ const SlotMachine = () => {
       localStorage.setItem("backgroundVolume", String(value));
       setMusicVolume(value);
     }
+  };
+
+  const handleTerminalSpin = () => {
+    // Gera os novos símbolos
+    const newReels: SlotSymbol[][] = [];
+    for (let i = 0; i < 5; i++) {
+      const reel = rng.getSymbols(3);
+      newReels.push(reel);
+    }
+    
+    const result = evaluateResult(newReels);
+    const payout = calculatePayout(result, 10); // Aposta padrão de 10 no terminal
+    
+    return {
+      symbols: newReels[0], // Retorna apenas a primeira linha para simplificar
+      won: result.severity === "win" || result.severity === "epic_win",
+      winAmount: payout
+    };
   };
 
   const spin = () => {
@@ -110,7 +131,8 @@ const SlotMachine = () => {
       if (result.severity === "win" || result.severity === "epic_win") {
         setShowWinExplosion(true);
         setConfettiTrigger((prev) => prev + 1);
-        setTimeout(() => setShowWinExplosion(false), 3000);
+        // Fecha automaticamente após 6 segundos (5s de animação + 1s)
+        setTimeout(() => setShowWinExplosion(false), 6000);
       }
 
       // Calcula o ganho/perda usando a nova função
@@ -148,16 +170,22 @@ const SlotMachine = () => {
 
   const playComboSound = (result: ComboResult) => {
     if (result.severity === "epic_win") {
-      // Som épico de vitória
+      // Som épico de vitória com moedas
       createProceduralSound("win");
       setTimeout(() => createProceduralSound("win"), 100);
-      setTimeout(() => createProceduralSound("win"), 200);
-      setTimeout(() => createProceduralSound("win"), 350);
-      setTimeout(() => createProceduralSound("win"), 500);
+      
+      // Sons de moeda durante a contagem (5 segundos)
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => createProceduralSound("click"), 200 + (i * 250));
+      }
     } else if (result.severity === "win") {
-      // Som normal de vitória
+      // Som normal de vitória com algumas moedas
       createProceduralSound("win");
-      setTimeout(() => createProceduralSound("win"), 200);
+      
+      // Sons de moeda durante a contagem
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => createProceduralSound("click"), 200 + (i * 500));
+      }
     } else if (result.severity === "epic_lose") {
       // Som de derrota épica
       createProceduralSound("lose");
@@ -218,6 +246,16 @@ const SlotMachine = () => {
       setBet((prev) => Math.max(prev - 10, 10));
     }
   };
+
+  if (terminalMode) {
+    return (
+      <TerminalMode
+        balance={balance}
+        onSpin={handleTerminalSpin}
+        onUpdateBalance={(amount) => setBalance(prev => Math.max(0, prev + amount))}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -488,30 +526,6 @@ const SlotMachine = () => {
           </div>
         </div>
 
-        {/* Bottom Info */}
-        <div className="p-4 sm:p-6 bg-gradient-to-t from-black/50 to-transparent">
-          <div className="max-w-4xl mx-auto">
-            {/* Combos Info */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-4 text-center"
-            >
-              <div className="text-xs text-gray-400 mb-2">
-                Combinações especiais:
-              </div>
-              <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-300">
-                <span>🔥🔥🔥 = Servidor caiu</span>
-                <span>🐞🐞🔧 = Deploy sexta</span>
-                <span>💾💾💾 = Kernel Panic</span>
-                <span>🔧🔧🔧 = Deploy mágico!</span>
-                <span>☕☕☕ = Overdose cafeína</span>
-                <span>💀💀💀 = Blue Screen</span>
-              </div>
-            </motion.div>
-          </div>
-        </div>
       </div>
 
       {/* Settings Modal */}
@@ -541,7 +555,12 @@ const SlotMachine = () => {
         show={showWinExplosion}
         message={currentCombo?.message || ""}
         severity={currentCombo?.severity}
+        amount={lastWin}
+        onComplete={() => setShowWinExplosion(false)}
       />
+      
+      {/* Secret Terminal */}
+      <SecretTerminal onActivateTerminalMode={() => setTerminalMode(true)} />
     </div>
   );
 };

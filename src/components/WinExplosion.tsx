@@ -1,32 +1,91 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface WinExplosionProps {
   show: boolean;
   message: string;
-  severity?: 'win' | 'epic_win' | 'lose' | 'epic_lose' | 'neutral' | null;
+  severity?: "win" | "epic_win" | "lose" | "epic_lose" | "neutral" | null;
+  amount?: number;
+  onComplete?: () => void;
 }
 
-const WinExplosion = ({ show, message, severity }: WinExplosionProps) => {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  
-  useEffect(() => {
-    if (show && (severity === 'win' || severity === 'epic_win')) {
-      // Cria partículas de explosão
-      const newParticles = Array.from({ length: severity === 'epic_win' ? 30 : 15 }, (_, i) => ({
-        id: Date.now() + i,
-        x: window.innerWidth / 2 + (Math.random() - 0.5) * 200,
-        y: window.innerHeight / 2 + (Math.random() - 0.5) * 200
-      }));
-      setParticles(newParticles);
-      
-      setTimeout(() => setParticles([]), 2000);
-    }
-  }, [show, severity]);
-  
-  if (!severity || severity === 'lose' || severity === 'epic_lose' || severity === 'neutral') return null;
+const motivationalPhrases = [
+  "🚀 Você é uma máquina de deploy!",
+  "💪 PHP DOMINANDO O MUNDO!",
+  "🎯 Acertou em cheio, dev!",
+  "⚡ Velocidade de produção insana!",
+  "🏆 Campeão dos deploys!",
+  "🔥 Tá pegando fogo, bixo!",
+  "💎 Código vale ouro!",
+  "🌟 Estrela do desenvolvimento!",
+  "🎪 Mestre do caos organizado!",
+  "🦄 Unicórnio do código!",
+  "🎨 Artista do backend!",
+  "🧙‍♂️ Mago do PHP!",
+  "🎸 Rockstar developer!",
+  "🥷 Ninja do código!",
+  "👑 Rei dos bugs resolvidos!",
+];
 
-  const isEpic = severity === 'epic_win';
+const WinExplosion = ({
+  show,
+  message,
+  severity,
+  amount = 0,
+  onComplete,
+}: WinExplosionProps) => {
+  const [displayAmount, setDisplayAmount] = useState(0);
+  const [motivationalPhrase, setMotivationalPhrase] = useState("");
+
+  useEffect(() => {
+    if (show && (severity === "win" || severity === "epic_win") && amount > 0) {
+      // Seleciona frase motivacional aleatória
+      const phrase =
+        motivationalPhrases[
+          Math.floor(Math.random() * motivationalPhrases.length)
+        ];
+      setMotivationalPhrase(phrase);
+
+      // Animação de contagem
+      const duration = 5000; // 5 segundos
+      const steps = 100;
+      const increment = amount / steps;
+      const stepDuration = duration / steps;
+      let currentStep = 0;
+
+      const countInterval = setInterval(() => {
+        currentStep++;
+        if (currentStep <= steps) {
+          setDisplayAmount(Math.round(increment * currentStep));
+        } else {
+          clearInterval(countInterval);
+          setDisplayAmount(amount);
+
+          // Callback quando completar
+          setTimeout(() => {
+            if (onComplete) onComplete();
+          }, 1000);
+        }
+      }, stepDuration);
+
+      return () => {
+        clearInterval(countInterval);
+      };
+    } else {
+      setDisplayAmount(0);
+    }
+  }, [show, severity, amount, onComplete]);
+
+  if (
+    !severity ||
+    severity === "lose" ||
+    severity === "epic_lose" ||
+    severity === "neutral"
+  )
+    return null;
+  if (!show) return null;
+
+  const isEpic = severity === "epic_win";
 
   return (
     <AnimatePresence>
@@ -34,250 +93,242 @@ const WinExplosion = ({ show, message, severity }: WinExplosionProps) => {
         <>
           {/* Overlay escuro */}
           <motion.div
-            className="fixed inset-0 bg-black/70 z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-          
-          {/* Container principal */}
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+            className="fixed inset-0 bg-black/95 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
+          />
+
+          {/* Container principal */}
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {/* Background flash */}
+            {/* Container do elefante e valor */}
             <motion.div
-              className={`absolute inset-0 ${isEpic ? 'bg-gradient-radial from-yellow-500/50 via-orange-500/30 to-transparent' : 'bg-gradient-radial from-green-500/40 to-transparent'}`}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ 
-                opacity: [0, 1, 0.5, 1, 0],
-                scale: [0.5, 2, 1.5, 2, 3]
+              className="relative flex flex-col items-center"
+              initial={{ scale: 0, y: 100 }}
+              animate={{
+                scale: 1,
+                y: 0,
               }}
-              transition={{ duration: 1.5 }}
-            />
-
-            {/* Partículas de explosão */}
-            {particles.map((particle) => (
-              <motion.div
-                key={particle.id}
-                className={`absolute w-4 h-4 ${isEpic ? 'bg-yellow-400' : 'bg-green-400'} rounded-full`}
-                initial={{ 
-                  x: 0, 
-                  y: 0,
-                  scale: 0
-                }}
-                animate={{ 
-                  x: particle.x - window.innerWidth / 2,
-                  y: particle.y - window.innerHeight / 2,
-                  scale: [0, 1.5, 0],
-                  opacity: [1, 1, 0]
-                }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-              />
-            ))}
-
-            {/* Elefante Win atrás da mensagem */}
-            <motion.div
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-5 ${
-                isEpic ? 'w-[35rem] h-[35rem]' : 'w-[25rem] h-[25rem]'
-              }`}
-              initial={{ scale: 0, opacity: 0, rotate: -360 }}
-              animate={{ 
-                scale: [0, 1.3, 1],
-                opacity: [0, 0.9, 0.7],
-                rotate: 0
-              }}
-              transition={{ 
-                duration: 1.2,
-                times: [0, 0.6, 1],
-                ease: "easeOut"
+              transition={{
+                duration: 0.8,
+                type: "spring",
+                damping: 15,
               }}
             >
-              <motion.img
-                src="/elefante-win.webp"
-                alt="ElePHPant Winner"
-                className="w-full h-full object-contain"
-                style={{
-                  filter: isEpic 
-                    ? 'drop-shadow(0 0 80px rgba(255, 215, 0, 1)) drop-shadow(0 0 40px rgba(255, 100, 0, 0.8))'
-                    : 'drop-shadow(0 0 50px rgba(34, 197, 94, 0.8)) drop-shadow(0 0 30px rgba(34, 197, 94, 0.5))'
-                }}
+              {/* Elefante gigante */}
+              <motion.div
+                className="relative"
                 animate={{
-                  y: [0, -30, 0],
-                  rotate: isEpic ? [0, 5, -5, 0] : [0, 3, -3, 0]
+                  y: [0, -20, 0],
                 }}
                 transition={{
                   y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-                  rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-                }}
-              />
-              
-              {/* Texto PHP WIN no peito do elefante */}
-              <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                animate={{
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: "reverse"
                 }}
               >
-                <h3 className={`font-black ${isEpic ? 'text-6xl' : 'text-4xl'} text-white`}
+                <img
+                  src="/elefante-win.webp"
+                  alt="ElePHPant Winner"
+                  className={
+                    isEpic ? "w-[900px] h-[900px]" : "w-[700px] h-[700px]"
+                  }
                   style={{
-                    textShadow: '0 0 30px rgba(255,255,255,0.9), 0 4px 8px rgba(0,0,0,0.5)'
+                    filter: isEpic
+                      ? "drop-shadow(0 0 120px rgba(255, 215, 0, 1)) drop-shadow(0 0 60px rgba(255, 100, 0, 0.8))"
+                      : "drop-shadow(0 0 80px rgba(34, 197, 94, 0.8)) drop-shadow(0 0 40px rgba(34, 197, 94, 0.5))",
+                    objectFit: "contain",
+                  }}
+                />
+              </motion.div>
+
+              {/* Valor contador em branco grande */}
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <motion.div
+                  className={`${
+                    isEpic ? "text-9xl" : "text-8xl"
+                  } font-black text-white`}
+                  style={{
+                    textShadow:
+                      "0 0 60px rgba(255,255,255,0.8), 0 8px 16px rgba(0,0,0,0.8)",
+                    letterSpacing: "2px",
+                  }}
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    repeat: Infinity,
+                    repeatType: "reverse",
                   }}
                 >
-                  PHP WIN!
-                </h3>
+                  R$ {displayAmount.toLocaleString("pt-BR")}
+                </motion.div>
+              </motion.div>
+
+              {/* Frase motivacional abaixo */}
+              <motion.div
+                className="mt-6 text-center"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                <div
+                  className="text-3xl font-bold text-white px-12 py-6 bg-gradient-to-r from-purple-600/90 to-purple-800/90 rounded-3xl border-2 border-purple-400/50 backdrop-blur-sm"
+                  style={{
+                    boxShadow: "0 20px 60px rgba(147, 51, 234, 0.4)",
+                  }}
+                >
+                  {motivationalPhrase}
+                </div>
+              </motion.div>
+
+              {/* Mensagem do combo */}
+              <motion.div
+                className="text-2xl font-semibold text-yellow-300 mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+              >
+                {message}
               </motion.div>
             </motion.div>
 
-            {/* Mensagem principal */}
-            <motion.div
-              className="relative z-10"
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ 
-                scale: 1.6,
-                rotate: 0
-              }}
-              transition={{ 
-                duration: 1,
-                type: "spring",
-                damping: 10,
-                stiffness: 100
-              }}
-            >
-              <div className={`
-                ${isEpic 
-                  ? 'bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500' 
-                  : 'bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500'
-                }
-                p-8 rounded-3xl shadow-2xl border-4 border-white/80
-                text-center max-w-2xl mx-4
-              `}
-              style={{
-                boxShadow: isEpic 
-                  ? '0 0 100px rgba(255, 215, 0, 0.8), 0 0 200px rgba(255, 215, 0, 0.4), inset 0 0 50px rgba(255,255,255,0.5)'
-                  : '0 0 60px rgba(34, 197, 94, 0.8), 0 0 120px rgba(34, 197, 94, 0.4), inset 0 0 30px rgba(255,255,255,0.3)'
-              }}
-              >
-                {/* Container com pulse animation */}
+            {/* Moedas caindo ao fundo */}
+            <motion.div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {[...Array(isEpic ? 30 : 20)].map((_, i) => (
                 <motion.div
-                  animate={{ 
-                    scale: [1, 1.05, 1]
+                  key={i}
+                  className="absolute text-5xl opacity-70"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: "-100px",
                   }}
-                  transition={{ 
-                    duration: 0.5,
+                  animate={{
+                    y: window.innerHeight + 200,
+                    x: [
+                      (Math.random() - 0.5) * 100,
+                      (Math.random() - 0.5) * 200,
+                    ],
+                  }}
+                  transition={{
+                    duration: 4 + Math.random() * 2,
+                    delay: Math.random() * 3,
                     repeat: Infinity,
-                    repeatType: "reverse"
+                    ease: "linear",
                   }}
                 >
-                  {/* Título animado */}
-                  <h2 
-                    className="text-5xl sm:text-6xl md:text-7xl font-black mb-4 text-white"
-                    style={{
-                      textShadow: '0 0 30px rgba(255,255,255,0.9), 0 0 60px rgba(255,255,255,0.5)'
-                    }}
-                  >
-                    {isEpic ? '🎰 JACKPOT! 🎰' : '🎉 GANHOU! 🎉'}
-                  </h2>
-                  
-                  {/* Mensagem */}
-                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
-                    {message}
-                  </p>
-                  
-                  {/* Emojis girando */}
+                  {
+                    ["💰", "💵", "💸", "🪙", "💎"][
+                      Math.floor(Math.random() * 5)
+                    ]
+                  }
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Partículas de luz */}
+            {isEpic && (
+              <div className="absolute inset-0 pointer-events-none">
+                {[...Array(50)].map((_, i) => (
                   <motion.div
-                    className="flex justify-center gap-4 text-5xl"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    {isEpic ? (
-                      <>💰 🏆 💎 🚀 ⭐</>
-                    ) : (
-                      <>🎊 ✨ 🎈 🌟 🎯</>
-                    )}
-                  </motion.div>
-                </motion.div>
+                    key={`particle-${i}`}
+                    className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                    }}
+                    animate={{
+                      x: [
+                        (Math.random() - 0.5) * 800,
+                        (Math.random() - 0.5) * 1200,
+                      ],
+                      y: [
+                        (Math.random() - 0.5) * 800,
+                        (Math.random() - 0.5) * 1200,
+                      ],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 3,
+                      delay: Math.random() * 2,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                    }}
+                  />
+                ))}
               </div>
+            )}
 
-              {/* Raios de luz para mega vitórias */}
-              {isEpic && (
+            {/* Fogos de artifício estáticos nos cantos */}
+            {isEpic && (
+              <>
                 <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-20 left-20 text-7xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                  }}
                 >
-                  {[...Array(12)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-2 h-48 bg-gradient-to-t from-transparent via-yellow-400/50 to-transparent"
-                      style={{
-                        transform: `rotate(${i * 30}deg)`,
-                        transformOrigin: 'center bottom'
-                      }}
-                    />
-                  ))}
+                  🎆
                 </motion.div>
-              )}
-            </motion.div>
-
-            {/* Fogos de artifício laterais */}
-            <motion.div
-              className="absolute top-20 left-20 text-8xl"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: [0, 2, 1.5],
-                opacity: [0, 1, 0],
-                rotate: 720
-              }}
-              transition={{ duration: 1.5, delay: 0.2 }}
-            >
-              🎆
-            </motion.div>
-            <motion.div
-              className="absolute top-20 right-20 text-8xl"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: [0, 2, 1.5],
-                opacity: [0, 1, 0],
-                rotate: -720
-              }}
-              transition={{ duration: 1.5, delay: 0.3 }}
-            >
-              🎇
-            </motion.div>
-            <motion.div
-              className="absolute bottom-20 left-20 text-8xl"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: [0, 2, 1.5],
-                opacity: [0, 1, 0],
-                rotate: 720
-              }}
-              transition={{ duration: 1.5, delay: 0.4 }}
-            >
-              ✨
-            </motion.div>
-            <motion.div
-              className="absolute bottom-20 right-20 text-8xl"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: [0, 2, 1.5],
-                opacity: [0, 1, 0],
-                rotate: -720
-              }}
-              transition={{ duration: 1.5, delay: 0.5 }}
-            >
-              🌟
-            </motion.div>
+                <motion.div
+                  className="absolute top-20 right-20 text-7xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: 2,
+                    delay: 0.5,
+                    repeat: Infinity,
+                  }}
+                >
+                  🎇
+                </motion.div>
+                <motion.div
+                  className="absolute bottom-20 left-20 text-7xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: 2,
+                    delay: 1,
+                    repeat: Infinity,
+                  }}
+                >
+                  ✨
+                </motion.div>
+                <motion.div
+                  className="absolute bottom-20 right-20 text-7xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{
+                    duration: 2,
+                    delay: 1.5,
+                    repeat: Infinity,
+                  }}
+                >
+                  🌟
+                </motion.div>
+              </>
+            )}
           </motion.div>
         </>
       )}
