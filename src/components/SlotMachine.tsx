@@ -20,7 +20,7 @@ const SlotMachine = () => {
   const [currentCombo, setCurrentCombo] = useState<ComboResult | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { playSound, stopSound, stopAllSounds, createProceduralSound } = useSound(soundEnabled);
+  const { stopAllSounds, createProceduralSound } = useSound(soundEnabled);
 
   // Carrega preferências salvas
   useEffect(() => {
@@ -32,17 +32,17 @@ const SlotMachine = () => {
 
   const spin = () => {
     if (isSpinning) return;
-    
+
     // Som de click do botão
-    createProceduralSound('click');
+    createProceduralSound("click");
 
     setIsSpinning(true);
     setMessage("Deployando em prod...");
     setCurrentCombo(null);
     setTotalSpins((prev) => prev + 1);
-    
+
     // Som de spin iniciando
-    createProceduralSound('spin');
+    createProceduralSound("spin");
 
     // Gera os novos símbolos IMEDIATAMENTE (antes da animação)
     const newReels: SlotSymbol[][] = [];
@@ -61,7 +61,7 @@ const SlotMachine = () => {
       const result = evaluateResult(newReels);
       setCurrentCombo(result);
       setMessage(result.message);
-      
+
       // Toca som baseado no resultado
       playComboSound(result);
 
@@ -88,38 +88,38 @@ const SlotMachine = () => {
 
   const playComboSound = (result: ComboResult) => {
     switch (result.type) {
-      case 'deploy_magico':
+      case "deploy_magico":
         // Som épico de vitória
-        createProceduralSound('win');
-        setTimeout(() => createProceduralSound('win'), 200);
-        setTimeout(() => createProceduralSound('win'), 400);
+        createProceduralSound("win");
+        setTimeout(() => createProceduralSound("win"), 200);
+        setTimeout(() => createProceduralSound("win"), 400);
         break;
-      case 'overdose_cafe':
+      case "overdose_cafe":
         // Som de energia/cafe
-        createProceduralSound('win');
+        createProceduralSound("win");
         break;
-      case 'servidor_caindo':
-      case 'blue_screen_total':
+      case "servidor_caindo":
+      case "blue_screen_total":
         // Som de alarme/erro crítico
-        createProceduralSound('lose');
-        setTimeout(() => createProceduralSound('lose'), 300);
+        createProceduralSound("lose");
+        setTimeout(() => createProceduralSound("lose"), 300);
         break;
-      case 'deploy_sexta':
-      case 'kernel_panic':
+      case "deploy_sexta":
+      case "kernel_panic":
         // Som de erro
-        createProceduralSound('lose');
+        createProceduralSound("lose");
         break;
-      case 'promocao_estagiario':
+      case "promocao_estagiario":
         // Som neutro/cômico
-        createProceduralSound('click');
-        setTimeout(() => createProceduralSound('click'), 100);
+        createProceduralSound("click");
+        setTimeout(() => createProceduralSound("click"), 100);
         break;
       default:
         // Som neutro
-        createProceduralSound('click');
+        createProceduralSound("click");
     }
   };
-  
+
   const applyEffect = (effect: string) => {
     const root = document.getElementById("root");
     if (!root) return;
@@ -160,10 +160,10 @@ const SlotMachine = () => {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     localStorage.setItem("soundEnabled", String(newValue));
-    
+
     // Toca um som de teste quando ativa
     if (newValue) {
-      createProceduralSound('click');
+      createProceduralSound("click");
     } else {
       stopAllSounds();
     }
@@ -195,7 +195,7 @@ const SlotMachine = () => {
           <button
             onClick={() => {
               toggleEffects();
-              createProceduralSound('click');
+              createProceduralSound("click");
             }}
             className={`px-4 py-2 rounded-lg font-semibold transition-all ${
               effectsEnabled

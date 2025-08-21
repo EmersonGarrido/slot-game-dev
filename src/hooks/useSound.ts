@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useRef, useEffect } from 'react';
 
 // URLs de sons gratuitos (vamos usar sons embutidos ou de CDN)
@@ -9,19 +10,6 @@ const SOUNDS = {
   epic: 'data:audio/wav;base64,UklGRjwHAABXQVZFZm10IBAAAAABAAEAiBUAABAXAAACABAAZGF0YRgHAAB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/',
   alarm: 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAiBUAABAXAAACABAAZGF0YUAGAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA',
   click: 'data:audio/wav;base64,UklGRogCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YWQCAAD//wAA//8AAP//AAAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA',
-}
-
-// Carrega sons de uma fonte online melhor
-const SOUND_URLS = {
-  spin: 'https://www.soundjay.com/misc/sounds/casino-slot-machine-02.mp3',
-  stop: 'https://freesound.org/data/previews/341/341695_5450487-lq.mp3',
-  win: 'https://freesound.org/data/previews/518/518305_5450487-lq.mp3',
-  lose: 'https://freesound.org/data/previews/159/159408_2767451-lq.mp3',
-  epic: 'https://freesound.org/data/previews/270/270402_5450487-lq.mp3',
-  alarm: 'https://freesound.org/data/previews/320/320655_5450487-lq.mp3',
-  click: 'https://freesound.org/data/previews/256/256113_4772965-lq.mp3',
-  coffee: 'https://freesound.org/data/previews/564/564419_5450487-lq.mp3',
-  death: 'https://freesound.org/data/previews/333/333785_5450487-lq.mp3',
 }
 
 export const useSound = (enabled: boolean = true) => {
@@ -64,10 +52,10 @@ export const useSound = (enabled: boolean = true) => {
       if (audio) {
         audio.currentTime = 0;
         audio.volume = Math.min(1, Math.max(0, volume));
-        
+
         // Cria uma nova promessa para tocar o som
         const playPromise = audio.play();
-        
+
         if (playPromise !== undefined) {
           playPromise.catch(error => {
             console.log('Audio play failed:', error);
@@ -115,7 +103,7 @@ export const useSound = (enabled: boolean = true) => {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
         break;
-        
+
       case 'win':
         oscillator.frequency.setValueAtTime(440, ctx.currentTime);
         oscillator.frequency.setValueAtTime(554, ctx.currentTime + 0.1);
@@ -125,7 +113,7 @@ export const useSound = (enabled: boolean = true) => {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
         break;
-        
+
       case 'lose':
         oscillator.frequency.setValueAtTime(300, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
@@ -134,7 +122,7 @@ export const useSound = (enabled: boolean = true) => {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
         break;
-        
+
       case 'click':
         oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
         gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
