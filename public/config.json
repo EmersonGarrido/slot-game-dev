@@ -1,0 +1,23 @@
+{
+  "symbols": {
+    "weights": {
+      "bug": 0.50,
+      "fire": 0.20,
+      "memory": 0.20,
+      "deploy": 0.10
+    }
+  },
+  "animations": {
+    "spinDuration": 3500,
+    "reelDelay": 300,
+    "resultDisplayTime": 3000
+  },
+  "audio": {
+    "masterVolume": 0.7,
+    "sfxEnabled": true
+  },
+  "debug": {
+    "seed": null,
+    "logRNG": false
+  }
+}

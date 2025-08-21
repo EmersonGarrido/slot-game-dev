@@ -1,0 +1,172 @@
+/* Efeitos visuais do Slot dos Bugs */
+
+/* Background animado estilo cassino */
+.casino-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #1a0033 0%, #220044 25%, #1a0033 50%, #220044 75%, #1a0033 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+.casino-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 100, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 200, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 0, 100, 0.05) 0%, transparent 50%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+/* Floating icons background */
+.floating-icons {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floating-icon {
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.1;
+  animation: float 20s linear infinite;
+}
+
+@keyframes float {
+  from {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(-100px) rotate(360deg);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+@keyframes alarm-flash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(255, 0, 0, 0.3); }
+}
+
+@keyframes confetti-fall {
+  0% { 
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% { 
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Shake effect */
+.shake-effect {
+  animation: shake 0.5s;
+}
+
+/* Alarm effect */
+.alarm-effect {
+  animation: alarm-flash 0.5s infinite;
+  position: relative;
+}
+
+.alarm-effect::before {
+  content: '🚨 ALERTA 🚨';
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: red;
+  color: white;
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 10px;
+  z-index: 9999;
+  animation: shake 0.5s infinite;
+}
+
+/* Blue screen effect */
+.blue-screen-effect::before {
+  content: ':(';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #0078d4;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 120px;
+  z-index: 9998;
+  animation: fadeOut 2s forwards;
+}
+
+.blue-screen-effect::after {
+  content: 'Kernel Panic - Reiniciando...';
+  position: fixed;
+  top: 60%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 24px;
+  z-index: 9999;
+  animation: fadeOut 2s forwards;
+}
+
+/* Confetti effect */
+.confetti-effect::before,
+.confetti-effect::after {
+  content: '🎉';
+  position: fixed;
+  top: -50px;
+  font-size: 40px;
+  animation: confetti-fall 3s linear;
+  z-index: 9997;
+}
+
+.confetti-effect::before {
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.confetti-effect::after {
+  left: 80%;
+  animation-delay: 0.5s;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
