@@ -5,7 +5,7 @@ const ElephantMascot = () => {
     <motion.div
       className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none
                  w-[900px] h-[900px]
-                 mt-20"
+                 mt-40"
       initial={{ opacity: 0, scale: 0 }}
       animate={{
         opacity: 0.3,

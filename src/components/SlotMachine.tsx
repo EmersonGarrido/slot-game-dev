@@ -5,7 +5,7 @@ import SettingsModal from "./SettingsModal";
 import Confetti from "./Confetti";
 import WinExplosion from "./WinExplosion";
 import ElephantSpeechBubble from "./ElephantSpeechBubble";
-import { evaluateResult } from "../utils/rules";
+import { evaluateResult, calculatePayout } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
 import { useBackgroundMusic } from "../hooks/useBackgroundMusic";
@@ -108,22 +108,33 @@ const SlotMachine = () => {
         setTimeout(() => setShowWinExplosion(false), 3000);
       }
 
-      // Atualiza balance baseado na severidade
-      let winAmount = 0;
-      if (result.severity === "epic_win") {
-        winAmount = bet * 50;
-      } else if (result.severity === "win") {
-        winAmount = bet * 10;
-      } else if (result.severity === "epic_lose") {
-        setBalance(0);
-        setMessage(result.message + " 💀 GAME OVER!");
-      } else if (result.severity === "lose") {
-        // Já descontou a aposta
-      }
+      // Calcula o ganho/perda usando a nova função
+      const payout = calculatePayout(result, bet);
       
-      if (winAmount > 0) {
-        setLastWin(winAmount);
-        setBalance((prev) => prev + winAmount);
+      if (payout > 0) {
+        // Ganhou!
+        setLastWin(payout);
+        setBalance((prev) => prev + payout);
+        
+        // Se for mega vitória, mostra animação especial
+        if (result.severity === "epic_win") {
+          setTimeout(() => {
+            setMessage(result.message + ` 💰 +$${payout}!`);
+          }, 500);
+        }
+      } else if (payout < 0) {
+        // Perda épica (perde mais que a aposta)
+        const loss = Math.abs(payout);
+        setBalance((prev) => Math.max(0, prev - loss));
+        if (balance <= loss) {
+          setMessage(result.message + " 💀 GAME OVER!");
+          setBalance(0);
+        }
+      } else if (result.severity === "neutral") {
+        // Neutro - devolve metade
+        const refund = bet * 0.5;
+        setBalance((prev) => prev + refund);
+        setLastWin(refund);
       }
 
       setIsSpinning(false);
@@ -131,30 +142,28 @@ const SlotMachine = () => {
   };
 
   const playComboSound = (result: ComboResult) => {
-    switch (result.type) {
-      case "deploy_magico":
-        createProceduralSound("win");
-        setTimeout(() => createProceduralSound("win"), 200);
-        setTimeout(() => createProceduralSound("win"), 400);
-        break;
-      case "overdose_cafe":
-        createProceduralSound("win");
-        break;
-      case "servidor_caindo":
-      case "blue_screen_total":
-        createProceduralSound("lose");
-        setTimeout(() => createProceduralSound("lose"), 300);
-        break;
-      case "deploy_sexta":
-      case "kernel_panic":
-        createProceduralSound("lose");
-        break;
-      case "promocao_estagiario":
-        createProceduralSound("click");
-        setTimeout(() => createProceduralSound("click"), 100);
-        break;
-      default:
-        createProceduralSound("click");
+    if (result.severity === "epic_win") {
+      // Som épico de vitória
+      createProceduralSound("win");
+      setTimeout(() => createProceduralSound("win"), 100);
+      setTimeout(() => createProceduralSound("win"), 200);
+      setTimeout(() => createProceduralSound("win"), 350);
+      setTimeout(() => createProceduralSound("win"), 500);
+    } else if (result.severity === "win") {
+      // Som normal de vitória
+      createProceduralSound("win");
+      setTimeout(() => createProceduralSound("win"), 200);
+    } else if (result.severity === "epic_lose") {
+      // Som de derrota épica
+      createProceduralSound("lose");
+      setTimeout(() => createProceduralSound("lose"), 300);
+      setTimeout(() => createProceduralSound("lose"), 600);
+    } else if (result.severity === "lose") {
+      // Som de derrota normal
+      createProceduralSound("lose");
+    } else {
+      // Som neutro
+      createProceduralSound("click");
     }
   };
 
