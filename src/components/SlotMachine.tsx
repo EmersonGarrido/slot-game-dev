@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Reel from "./Reel";
 import SettingsModal from "./SettingsModal";
-import ElephantMascot from "./ElephantMascot";
 import Confetti from "./Confetti";
 import WinExplosion from "./WinExplosion";
+import ElephantSpeechBubble from "./ElephantSpeechBubble";
 import { evaluateResult } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
@@ -286,7 +286,7 @@ const SlotMachine = () => {
             >
               {/* Elephant Mascot behind and to the right */}
               <motion.div
-                className="absolute -right-32 sm:-right-40 md:-right-48 top-1/2 -translate-y-[70%] w-[20rem] sm:w-[24rem] md:w-[28rem] z-0"
+                className="absolute -right-20 sm:-right-28 md:-right-36 top-1/2 -translate-y-[75%] w-[26rem] sm:w-[30rem] md:w-[34rem] z-0"
                 initial={{ x: 200, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.5, type: "spring" }}
@@ -307,6 +307,9 @@ const SlotMachine = () => {
                     rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" }
                   }}
                 />
+                
+                {/* Speech Bubble */}
+                <ElephantSpeechBubble />
               </motion.div>
               {/* Golden Frame */}
               <div className="bg-gradient-to-b from-yellow-600 via-yellow-500 to-yellow-600 p-1 rounded-3xl shadow-2xl relative z-10"
