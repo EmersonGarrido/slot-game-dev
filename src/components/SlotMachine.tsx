@@ -286,8 +286,8 @@ const SlotMachine = () => {
             >
               {/* Elephant Mascot behind and to the right */}
               <motion.div
-                className="absolute -right-64 sm:-right-80 md:-right-96 top-1/2 -translate-y-[70%] w-[40rem] sm:w-[48rem] md:w-[56rem] z-0"
-                initial={{ x: 400, opacity: 0 }}
+                className="absolute -right-32 sm:-right-40 md:-right-48 top-1/2 -translate-y-[70%] w-[20rem] sm:w-[24rem] md:w-[28rem] z-0"
+                initial={{ x: 200, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.5, type: "spring" }}
               >
