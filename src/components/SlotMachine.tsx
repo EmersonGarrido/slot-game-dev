@@ -290,11 +290,6 @@ const SlotMachine = () => {
             }, 1000);
           }
         }
-      } else if (result.severity === "neutral") {
-        // Neutro - devolve metade
-        const refund = bet * 0.5;
-        setBalance((prev) => prev + refund);
-        setLastWin(refund);
       }
 
       setIsSpinning(false);
@@ -365,12 +360,20 @@ const SlotMachine = () => {
     localStorage.setItem("effectsEnabled", String(newValue));
   };
 
-  // Easter eggs
+  // Easter eggs e verificação de saldo
   useEffect(() => {
     if (totalSpins === 100) {
       setMessage("Parabéns, você é oficialmente viciado!");
     }
-  }, [totalSpins]);
+    
+    // Mostra modal do agiota quando saldo zera (mas não no início)
+    if (balance === 0 && totalSpins > 0 && !showAgiotaModal) {
+      setTimeout(() => {
+        setShowAgiotaModal(true);
+        setMessage("💸 Falido! Que tal um empréstimo camarada?");
+      }, 1500);
+    }
+  }, [totalSpins, balance, showAgiotaModal]);
 
   const adjustBet = (direction: "up" | "down") => {
     if (direction === "up" && bet < balance) {
@@ -644,8 +647,14 @@ const SlotMachine = () => {
 
                 {/* Spin Button */}
                 <motion.button
-                  onClick={spin}
-                  disabled={isSpinning || balance < bet}
+                  onClick={() => {
+                    if (balance < bet && !isSpinning) {
+                      setShowAgiotaModal(true);
+                    } else {
+                      spin();
+                    }
+                  }}
+                  disabled={isSpinning}
                   whileHover={!isSpinning && balance >= bet ? { scale: 1.05 } : {}}
                   whileTap={!isSpinning && balance >= bet ? { scale: 0.95 } : {}}
                   className={`

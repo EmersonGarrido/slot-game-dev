@@ -148,11 +148,11 @@ export function evaluateResult(reels: SlotSymbol[][]): ComboResult {
     }
   }
   
-  // NEUTRO - Nem ganhou nem perdeu muito
+  // PERDEU - Sem combinações
   return {
-    type: 'neutro',
-    message: 'Tudo normal... por enquanto.',
-    severity: 'neutral'
+    type: 'sem_combinacao',
+    message: 'Nenhuma combinação... perdeu!',
+    severity: 'lose'
   }
 }
 
@@ -173,12 +173,12 @@ export function calculatePayout(result: ComboResult, bet: number): number {
         return bet * 3 // 3x para vitórias pequenas
       }
     case 'epic_lose':
-      return -bet * 2 // Perde o dobro da aposta
+      return 0 // Perde a aposta (removido o dobro, muito punitivo)
     case 'lose':
-      return 0 // Perde só a aposta
+      return 0 // Perde a aposta
     case 'neutral':
     default:
-      return bet * 0.5 // Devolve metade da aposta
+      return 0 // Perde a aposta (não devolve mais metade)
   }
 }
 
