@@ -3,20 +3,21 @@ import { motion } from 'framer-motion';
 const ElephantMascot = () => {
   return (
     <motion.div
-      className="fixed bottom-4 right-4 z-20 pointer-events-none
-                 w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] 
-                 md:w-[120px] md:h-[120px] lg:w-[150px] lg:h-[150px]"
+      className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none
+                 w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] 
+                 md:w-[600px] md:h-[600px] lg:w-[700px] lg:h-[700px]
+                 mt-20"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ 
-        opacity: 1, 
+        opacity: 0.3, 
         scale: 1,
-        y: [0, -20, 0]
+        y: [0, -10, 0]
       }}
       transition={{
         opacity: { duration: 1 },
         scale: { duration: 1, type: "spring" },
         y: {
-          duration: 3,
+          duration: 4,
           repeat: Infinity,
           ease: "easeInOut"
         }
@@ -26,56 +27,18 @@ const ElephantMascot = () => {
         src="/elefante-php.webp"
         alt="ElePHPant - Mascote do Jogo"
         className="w-full h-full object-contain drop-shadow-2xl"
+        style={{
+          filter: 'drop-shadow(0 0 30px rgba(147, 51, 234, 0.5))'
+        }}
         animate={{
-          rotate: [-5, 5, -5]
+          rotate: [-3, 3, -3]
         }}
         transition={{
-          duration: 4,
+          duration: 6,
           repeat: Infinity,
           ease: "easeInOut"
         }}
       />
-      
-      {/* Sparkles around the elephant */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center"
-        animate={{
-          rotate: [0, 360]
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        <span className="absolute -top-2 left-1/2 text-yellow-400 text-xl">✨</span>
-        <span className="absolute -bottom-2 left-1/2 text-yellow-400 text-xl">✨</span>
-        <span className="absolute top-1/2 -left-2 text-yellow-400 text-xl">✨</span>
-        <span className="absolute top-1/2 -right-2 text-yellow-400 text-xl">✨</span>
-      </motion.div>
-      
-      {/* Speech bubble that appears occasionally */}
-      <motion.div
-        className="absolute -top-10 -left-16 bg-white rounded-lg px-2 py-1 shadow-lg"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ 
-          opacity: [0, 1, 1, 0],
-          scale: [0, 1, 1, 0]
-        }}
-        transition={{
-          duration: 4,
-          times: [0, 0.1, 0.9, 1],
-          repeat: Infinity,
-          repeatDelay: 10
-        }}
-      >
-        <p className="text-xs font-bold text-purple-600">PHP wins! 🎰</p>
-        <div className="absolute bottom-0 right-4 w-0 h-0 
-                        border-l-[8px] border-l-transparent
-                        border-t-[8px] border-t-white
-                        border-r-[8px] border-r-transparent
-                        translate-y-full"></div>
-      </motion.div>
     </motion.div>
   );
 };

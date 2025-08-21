@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Reel from "./Reel";
 import SettingsModal from "./SettingsModal";
 import ElephantMascot from "./ElephantMascot";
+import Confetti from "./Confetti";
+import WinExplosion from "./WinExplosion";
 import { evaluateResult } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
@@ -18,7 +20,8 @@ const SlotMachine = () => {
     ["🐞", "🐞", "🐞"],
   ]);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [balance, setBalance] = useState(100);
+  const [balance, setBalance] = useState(1000);
+  const [bet, setBet] = useState(10);
   const [totalSpins, setTotalSpins] = useState(0);
   const [message, setMessage] = useState("Pronto para o caos?");
   const [currentCombo, setCurrentCombo] = useState<ComboResult | null>(null);
@@ -27,8 +30,11 @@ const SlotMachine = () => {
   const [effectsVolume, setEffectsVolume] = useState(0.5);
   const [backgroundVolume, setBackgroundVolume] = useState(0.3);
   const [showSettings, setShowSettings] = useState(false);
+  const [showWinExplosion, setShowWinExplosion] = useState(false);
+  const [confettiTrigger, setConfettiTrigger] = useState(0);
+  const [lastWin, setLastWin] = useState(0);
   
-  const { stopAllSounds, createProceduralSound } = useSound(soundEnabled, effectsVolume);
+  const { createProceduralSound } = useSound(soundEnabled, effectsVolume);
   const { setMusicVolume } = useBackgroundMusic(soundEnabled, backgroundVolume);
 
   // Carrega preferências salvas
@@ -56,7 +62,7 @@ const SlotMachine = () => {
   };
 
   const spin = () => {
-    if (isSpinning) return;
+    if (isSpinning || balance < bet) return;
 
     // Som de click do botão
     createProceduralSound("click");
@@ -65,6 +71,8 @@ const SlotMachine = () => {
     setMessage("Deployando em prod...");
     setCurrentCombo(null);
     setTotalSpins((prev) => prev + 1);
+    setBalance((prev) => prev - bet);
+    setLastWin(0);
 
     // Som de spin iniciando
     createProceduralSound("spin");
@@ -93,16 +101,29 @@ const SlotMachine = () => {
         applyEffect(result.effect);
       }
 
+      // Mostra explosão e confete para vitórias
+      if (result.severity === "win" || result.severity === "epic_win") {
+        setShowWinExplosion(true);
+        setConfettiTrigger(prev => prev + 1);
+        setTimeout(() => setShowWinExplosion(false), 3000);
+      }
+
       // Atualiza balance baseado na severidade
+      let winAmount = 0;
       if (result.severity === "epic_win") {
-        setBalance((prev) => prev + 500);
+        winAmount = bet * 50;
       } else if (result.severity === "win") {
-        setBalance((prev) => prev + 100);
+        winAmount = bet * 10;
       } else if (result.severity === "epic_lose") {
         setBalance(0);
         setMessage(result.message + " 💀 GAME OVER!");
       } else if (result.severity === "lose") {
-        setBalance(0);
+        // Já descontou a aposta
+      }
+      
+      if (winAmount > 0) {
+        setLastWin(winAmount);
+        setBalance((prev) => prev + winAmount);
       }
 
       setIsSpinning(false);
@@ -163,18 +184,6 @@ const SlotMachine = () => {
     }
   };
 
-  const toggleSound = () => {
-    const newValue = !soundEnabled;
-    setSoundEnabled(newValue);
-    localStorage.setItem("soundEnabled", String(newValue));
-
-    if (newValue) {
-      createProceduralSound("click");
-    } else {
-      stopAllSounds();
-    }
-  };
-
   const toggleEffects = () => {
     const newValue = !effectsEnabled;
     setEffectsEnabled(newValue);
@@ -188,158 +197,290 @@ const SlotMachine = () => {
     }
   }, [totalSpins]);
 
+  const adjustBet = (direction: 'up' | 'down') => {
+    if (direction === 'up' && bet < balance) {
+      setBet(prev => Math.min(prev + 10, 1000, balance));
+    } else if (direction === 'down' && bet > 10) {
+      setBet(prev => Math.max(prev - 10, 10));
+    }
+  };
+
   return (
-    <>
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center w-full px-2 sm:px-4"
-      >
-        {/* Header - Mobile Optimized */}
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url('/background.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }} />
+      </div>
+
+      {/* Main Container */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-start p-4 sm:p-6">
+          {/* Balance Display */}
+          <motion.div 
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 rounded-2xl p-4 backdrop-blur-sm border border-yellow-500/30 shadow-2xl"
+          >
+            <div className="text-gray-400 text-sm font-semibold mb-1">SALDO</div>
+            <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
+              ${balance.toLocaleString()}
+            </div>
+            {lastWin > 0 && (
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="text-yellow-400 text-sm mt-1"
+              >
+                +${lastWin} 🎉
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Settings Button */}
+          <motion.button
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            onClick={() => setShowSettings(true)}
+            className="bg-slate-800/90 backdrop-blur-sm hover:bg-slate-700/90 p-3 rounded-xl transition-all border border-gray-600/30"
+          >
+            <span className="text-2xl">⚙️</span>
+          </motion.button>
+        </div>
+
+        {/* Title */}
         <motion.div 
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring" }}
-          className="text-center mb-2 sm:mb-4"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-4"
         >
-          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1 sm:mb-2" 
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-2" 
             style={{
               background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF6B00 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              textShadow: '0 0 30px rgba(255, 215, 0, 0.5)',
+              textShadow: '0 0 60px rgba(255, 215, 0, 0.5)',
+              letterSpacing: '2px'
             }}
           >
             SLOT DOS BUGS
           </h1>
-          <p className="text-cyan-300 text-xs sm:text-sm font-semibold animate-pulse">
+          <p className="text-cyan-300 text-lg font-semibold">
             🎰 Um jogo de zoeira para devs 🎰
           </p>
         </motion.div>
 
-        {/* Stats Bar - Mobile Optimized */}
-        <motion.div 
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center justify-between w-full mb-2 sm:mb-4 gap-2"
-        >
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
-            <div className="bg-gray-800 rounded-lg px-3 py-1 sm:px-4 sm:py-2">
-              <span className="text-gray-400 text-xs sm:text-sm">Créditos: </span>
-              <span className="text-green-400 font-bold text-sm sm:text-base">{balance}</span>
-            </div>
-            <div className="bg-gray-800 rounded-lg px-3 py-1 sm:px-4 sm:py-2">
-              <span className="text-gray-400 text-xs sm:text-sm">Giros: </span>
-              <span className="text-blue-400 font-bold text-sm sm:text-base">{totalSpins}</span>
-            </div>
+        {/* Main Game Area */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="relative">
+            {/* Slot Machine Frame */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3, type: "spring" }}
+              className="relative"
+            >
+              {/* Elephant Mascot behind and to the right */}
+              <motion.div
+                className="absolute -right-64 sm:-right-80 md:-right-96 top-1/2 -translate-y-[70%] w-[40rem] sm:w-[48rem] md:w-[56rem] z-0"
+                initial={{ x: 400, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.5, type: "spring" }}
+              >
+                <motion.img
+                  src="/elefante-php.webp"
+                  alt="ElePHPant"
+                  className="w-full h-auto"
+                  style={{
+                    filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.4))'
+                  }}
+                  animate={{
+                    y: [0, -15, 0],
+                    rotate: [-3, 3, -3]
+                  }}
+                  transition={{
+                    y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                    rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                />
+              </motion.div>
+              {/* Golden Frame */}
+              <div className="bg-gradient-to-b from-yellow-600 via-yellow-500 to-yellow-600 p-1 rounded-3xl shadow-2xl relative z-10"
+                style={{
+                  boxShadow: '0 0 60px rgba(255, 215, 0, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.3)'
+                }}
+              >
+                {/* Inner Machine */}
+                <div className="bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 rounded-2xl p-6 sm:p-8">
+                  {/* Reels Container */}
+                  <div className="bg-black/50 rounded-xl p-4 backdrop-blur-sm border-2 border-purple-500/30">
+                    <div className="flex justify-center gap-2 sm:gap-3">
+                      {reels.map((reel, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ y: -100, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.4 + index * 0.1 }}
+                        >
+                          <Reel
+                            symbols={reel}
+                            isSpinning={isSpinning}
+                            delay={index * 300}
+                            soundEnabled={soundEnabled}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Message Display */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-6"
+                  >
+                    <div className={`
+                      rounded-xl p-4 text-center font-bold text-lg
+                      ${currentCombo?.severity === "epic_win"
+                        ? "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white"
+                        : currentCombo?.severity === "win"
+                        ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                        : currentCombo?.severity === "epic_lose"
+                        ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
+                        : currentCombo?.severity === "lose"
+                        ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
+                        : "bg-slate-800/80 text-gray-300"
+                      }
+                    `}>
+                      {message}
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
           </div>
+        </div>
 
-          <button
-            onClick={() => setShowSettings(true)}
-            className="bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
-          >
-            <span className="text-xl sm:text-2xl">⚙️</span>
-          </button>
-        </motion.div>
-
-        {/* Slot Machine - Mobile Optimized */}
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, type: "spring" }}
-          className="bg-gradient-to-b from-black/80 to-purple-900/80 rounded-xl sm:rounded-2xl md:rounded-3xl p-2 sm:p-4 md:p-6 shadow-2xl border-2 sm:border-3 md:border-4 border-yellow-600 backdrop-blur-md w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl"
-          style={{
-            boxShadow: "0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 15px rgba(255, 215, 0, 0.2)",
-          }}
-        >
-          <div className="bg-gradient-to-b from-black/70 to-purple-900/70 rounded-lg sm:rounded-xl md:rounded-2xl p-1 sm:p-2 md:p-4 shadow-inner border border-yellow-600/40">
-            <div className="flex justify-center gap-[2px] sm:gap-1 md:gap-2 lg:gap-3 bg-gradient-to-b from-black/80 to-purple-900/80 rounded-md sm:rounded-lg md:rounded-xl p-1 sm:p-2 md:p-3 lg:p-4 border border-yellow-600/30">
-              {reels.map((reel, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ y: -50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
+        {/* Bottom Controls */}
+        <div className="p-4 sm:p-6 bg-gradient-to-t from-black/50 to-transparent">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              {/* Bet Controls */}
+              <motion.div 
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3 flex items-center gap-2"
+              >
+                <button
+                  onClick={() => adjustBet('down')}
+                  disabled={bet <= 10}
+                  className="text-2xl p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Reel
-                    symbols={reel}
-                    isSpinning={isSpinning}
-                    delay={index * 300}
-                    soundEnabled={soundEnabled}
+                  ➖
+                </button>
+                <div className="text-center px-3">
+                  <div className="text-xs text-gray-400">APOSTA</div>
+                  <div className="text-xl font-bold text-white">${bet}</div>
+                </div>
+                <button
+                  onClick={() => adjustBet('up')}
+                  disabled={bet >= balance}
+                  className="text-2xl p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  ➕
+                </button>
+              </motion.div>
+
+              {/* Spin Button */}
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.5 }}
+                onClick={spin}
+                disabled={isSpinning || balance < bet}
+                whileHover={!isSpinning && balance >= bet ? { scale: 1.05 } : {}}
+                whileTap={!isSpinning && balance >= bet ? { scale: 0.95 } : {}}
+                className={`
+                  relative overflow-hidden px-12 py-5 rounded-2xl font-black text-2xl
+                  transition-all duration-300 transform
+                  ${isSpinning || balance < bet
+                    ? "bg-gray-600 cursor-not-allowed text-gray-400"
+                    : "bg-gradient-to-b from-red-500 to-red-700 text-white hover:from-red-600 hover:to-red-800"
+                  }
+                `}
+                style={{
+                  boxShadow: isSpinning || balance < bet
+                    ? '0 10px 30px rgba(0,0,0,0.5)'
+                    : '0 10px 40px rgba(255,0,0,0.6), 0 0 60px rgba(255,100,0,0.4)',
+                }}
+              >
+                {/* Animated shine effect */}
+                {!isSpinning && balance >= bet && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: [-200, 200] }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   />
-                </motion.div>
-              ))}
+                )}
+                
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSpinning ? (
+                    <>
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        ⚙️
+                      </motion.span>
+                      RODANDO...
+                    </>
+                  ) : balance < bet ? (
+                    "SEM SALDO"
+                  ) : (
+                    <>
+                      🎰 RODAR 🎰
+                    </>
+                  )}
+                </span>
+              </motion.button>
+
+              {/* Auto Play (disabled) */}
+              <motion.div 
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3"
+              >
+                <button className="text-gray-500 p-2" disabled>
+                  <div className="text-2xl">🔄</div>
+                  <div className="text-xs">AUTO</div>
+                </button>
+              </motion.div>
             </div>
-          </div>
-        </motion.div>
 
-        {/* Message Display - Mobile Optimized */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className={`w-full mt-3 sm:mt-6 px-2 sm:px-8 ${
-            currentCombo?.effect === "yellow_banner" ? "animate-pulse" : ""
-          }`}
-        >
-          <div
-            className={`rounded-lg sm:rounded-xl p-2 sm:p-4 text-center font-bold text-sm sm:text-lg transition-all ${
-              currentCombo?.severity === "epic_lose"
-                ? "bg-red-900 text-red-100"
-                : currentCombo?.severity === "lose"
-                ? "bg-orange-900 text-orange-100"
-                : currentCombo?.severity === "epic_win"
-                ? "bg-green-900 text-green-100"
-                : currentCombo?.severity === "win"
-                ? "bg-blue-900 text-blue-100"
-                : "bg-gray-800 text-gray-100"
-            }`}
-          >
-            <p className="text-sm sm:text-xl">{message}</p>
+            {/* Combos Info */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-4 text-center"
+            >
+              <div className="text-xs text-gray-400 mb-2">Combinações especiais:</div>
+              <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-300">
+                <span>🔥🔥🔥 = Servidor caiu</span>
+                <span>🐞🐞🔧 = Deploy sexta</span>
+                <span>💾💾💾 = Kernel Panic</span>
+                <span>🔧🔧🔧 = Deploy mágico!</span>
+                <span>☕☕☕ = Overdose cafeína</span>
+                <span>💀💀💀 = Blue Screen</span>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
-
-        {/* Spin Button - Mobile Optimized */}
-        <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.7, type: "spring" }}
-          className="mt-3 sm:mt-6 w-full flex justify-center"
-        >
-          <button
-            onClick={spin}
-            disabled={isSpinning}
-            className={`
-              ${isSpinning
-                ? "bg-gradient-to-b from-gray-600 to-gray-700 cursor-not-allowed"
-                : "bg-gradient-to-b from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 transform hover:scale-105"
-              }
-              text-white text-lg sm:text-2xl md:text-3xl font-black py-2 sm:py-4 md:py-6 px-8 sm:px-12 md:px-20 rounded-lg sm:rounded-xl md:rounded-2xl transition-all duration-200 shadow-2xl border-2 sm:border-3 md:border-4 border-yellow-600 w-full sm:w-auto max-w-[200px] sm:max-w-xs
-            `}
-          >
-            {isSpinning ? "DEPLOYANDO..." : "RODAR"}
-          </button>
-        </motion.div>
-
-        {/* Info Panel - Mobile Hidden on Small Screens */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="hidden sm:block mt-6 sm:mt-8 text-center text-gray-400 text-xs sm:text-sm max-w-2xl"
-        >
-          <p className="mb-2 font-bold text-gray-300">Combinações especiais:</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2 text-xs">
-            <div>🔥🔥🔥 = Servidor caiu</div>
-            <div>🐞🐞🔧 = Deploy sexta</div>
-            <div>💾💾💾 = Kernel Panic</div>
-            <div>🔧🔧🔧 = Deploy mágico!</div>
-            <div>☕☕☕ = Overdose cafeína</div>
-            <div>💀💀💀 = Blue Screen</div>
-          </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Settings Modal */}
       <SettingsModal
@@ -357,9 +498,16 @@ const SlotMachine = () => {
         backgroundVolume={backgroundVolume}
       />
       
-      {/* Elephant Mascot */}
-      <ElephantMascot />
-    </>
+      {/* Confetti Effect */}
+      <Confetti trigger={confettiTrigger > 0} type={currentCombo?.severity as 'win' | 'epic_win'} />
+      
+      {/* Win Explosion */}
+      <WinExplosion 
+        show={showWinExplosion} 
+        message={currentCombo?.message || ""} 
+        severity={currentCombo?.severity}
+      />
+    </div>
   );
 };
 

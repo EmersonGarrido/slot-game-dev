@@ -12,7 +12,7 @@ const SOUNDS = {
   click: 'data:audio/wav;base64,UklGRogCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YWQCAAD//wAA//8AAP//AAAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA',
 }
 
-export const useSound = (enabled: boolean = true) => {
+export const useSound = (enabled: boolean = true, volume: number = 0.5) => {
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const audioContext = useRef<AudioContext | null>(null);
 
@@ -131,7 +131,7 @@ export const useSound = (enabled: boolean = true) => {
         oscillator.stop(ctx.currentTime + 0.05);
         break;
     }
-  }, [enabled]);
+  }, [enabled, volume]);
 
   return {
     playSound,

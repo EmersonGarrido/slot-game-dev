@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import type { SlotSymbol } from "../types/slot";
 import { useSound } from "../hooks/useSound";
 
@@ -35,7 +36,7 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
       // Inicia a animação após o delay
       setTimeout(() => {
         setIsAnimating(true);
-        setOffset(-70 * 15); // Move para mostrar os símbolos finais
+        setOffset(-100 * 15); // Ajustado para o novo tamanho
       }, delay);
       
       // Som quando o rolo para
@@ -52,10 +53,13 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
 
   return (
     <div
-      className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg shadow-inner border-2 border-gray-700 
-                 w-[75px] sm:w-[85px] md:w-[95px] lg:w-[105px]"
+      className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-xl shadow-inner border-2 border-purple-500/30 
+                 w-[90px] sm:w-[100px] md:w-[110px] lg:w-[120px]"
+      style={{
+        boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.5), inset 0 -4px 20px rgba(0,0,0,0.5)'
+      }}
     >
-      <div className="overflow-hidden h-[150px] sm:h-[170px] md:h-[190px] lg:h-[210px] relative">
+      <div className="overflow-hidden h-[270px] sm:h-[300px] relative">
         <div
           className="flex flex-col"
           style={{
@@ -67,26 +71,52 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
           }}
         >
           {displaySymbols.map((symbol, index) => (
-            <div
+            <motion.div
               key={`${index}-${symbol}-${isSpinning}`}
-              className="h-[50px] sm:h-[56px] md:h-[63px] lg:h-[70px] 
-                         flex items-center justify-center 
-                         text-3xl sm:text-3xl md:text-4xl lg:text-5xl"
+              className="h-[90px] sm:h-[100px] flex items-center justify-center text-6xl sm:text-7xl"
               style={{
                 filter:
                   isAnimating && index < displaySymbols.length - 3
-                    ? "blur(1px)"
+                    ? "blur(2px)"
                     : "none",
               }}
             >
-              {symbol}
-            </div>
+              {/* Symbol with idle animation when not spinning */}
+              <motion.span
+                animate={
+                  !isSpinning && index >= displaySymbols.length - 3
+                    ? {
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0],
+                      }
+                    : {}
+                }
+                transition={{
+                  duration: 2 + index * 0.2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: index * 0.3,
+                }}
+                className="drop-shadow-lg"
+                style={{
+                  textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                  filter: !isSpinning && index >= displaySymbols.length - 3
+                    ? 'drop-shadow(0 0 10px rgba(255,255,255,0.3))'
+                    : 'none'
+                }}
+              >
+                {symbol}
+              </motion.span>
+            </motion.div>
           ))}
         </div>
 
         {/* Gradientes para efeito de profundidade */}
-        <div className="absolute inset-x-0 top-0 h-6 sm:h-8 bg-gradient-to-b from-gray-800 to-transparent pointer-events-none"></div>
-        <div className="absolute inset-x-0 bottom-0 h-6 sm:h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-slate-900 via-slate-900/80 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none"></div>
+        
+        {/* Highlight lines */}
+        <div className="absolute inset-x-0 top-[90px] h-[90px] sm:top-[100px] sm:h-[100px] border-t-2 border-b-2 border-yellow-500/20 pointer-events-none"></div>
       </div>
     </div>
   );
