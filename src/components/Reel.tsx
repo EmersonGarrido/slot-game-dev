@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import type { SlotSymbol } from "../types/slot";
+import { useSound } from "../hooks/useSound";
 
 interface ReelProps {
   symbols: SlotSymbol[];
   isSpinning: boolean;
   delay: number;
+  soundEnabled?: boolean;
 }
 
-const Reel = ({ symbols, isSpinning, delay }: ReelProps) => {
+const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) => {
+  const { createProceduralSound } = useSound(soundEnabled);
   const [displaySymbols, setDisplaySymbols] = useState<SlotSymbol[]>(symbols);
   const [offset, setOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -34,6 +37,11 @@ const Reel = ({ symbols, isSpinning, delay }: ReelProps) => {
         setIsAnimating(true);
         setOffset(-60 * 15); // Move para mostrar os símbolos finais
       }, delay);
+      
+      // Som quando o rolo para
+      setTimeout(() => {
+        createProceduralSound('click');
+      }, 3000 + delay);
     } else {
       // Quando para de girar, mantém os símbolos finais
       setIsAnimating(false);

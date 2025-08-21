@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Reel from "./Reel";
 import { evaluateResult } from "../utils/rules";
 import { rng } from "../utils/rng";
+import { useSound } from "../hooks/useSound";
 import type { SlotSymbol, ComboResult } from "../types/slot";
 
 const SlotMachine = () => {
@@ -19,6 +20,7 @@ const SlotMachine = () => {
   const [currentCombo, setCurrentCombo] = useState<ComboResult | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const { playSound, stopSound, stopAllSounds, createProceduralSound } = useSound(soundEnabled);
 
   // Carrega preferências salvas
   useEffect(() => {
@@ -30,11 +32,17 @@ const SlotMachine = () => {
 
   const spin = () => {
     if (isSpinning) return;
+    
+    // Som de click do botão
+    createProceduralSound('click');
 
     setIsSpinning(true);
     setMessage("Deployando em prod...");
     setCurrentCombo(null);
     setTotalSpins((prev) => prev + 1);
+    
+    // Som de spin iniciando
+    createProceduralSound('spin');
 
     // Gera os novos símbolos IMEDIATAMENTE (antes da animação)
     const newReels: SlotSymbol[][] = [];
@@ -53,6 +61,9 @@ const SlotMachine = () => {
       const result = evaluateResult(newReels);
       setCurrentCombo(result);
       setMessage(result.message);
+      
+      // Toca som baseado no resultado
+      playComboSound(result);
 
       // Aplica efeitos baseado no resultado
       if (effectsEnabled && result.effect) {
@@ -75,6 +86,40 @@ const SlotMachine = () => {
     }, 3500);
   };
 
+  const playComboSound = (result: ComboResult) => {
+    switch (result.type) {
+      case 'deploy_magico':
+        // Som épico de vitória
+        createProceduralSound('win');
+        setTimeout(() => createProceduralSound('win'), 200);
+        setTimeout(() => createProceduralSound('win'), 400);
+        break;
+      case 'overdose_cafe':
+        // Som de energia/cafe
+        createProceduralSound('win');
+        break;
+      case 'servidor_caindo':
+      case 'blue_screen_total':
+        // Som de alarme/erro crítico
+        createProceduralSound('lose');
+        setTimeout(() => createProceduralSound('lose'), 300);
+        break;
+      case 'deploy_sexta':
+      case 'kernel_panic':
+        // Som de erro
+        createProceduralSound('lose');
+        break;
+      case 'promocao_estagiario':
+        // Som neutro/cômico
+        createProceduralSound('click');
+        setTimeout(() => createProceduralSound('click'), 100);
+        break;
+      default:
+        // Som neutro
+        createProceduralSound('click');
+    }
+  };
+  
   const applyEffect = (effect: string) => {
     const root = document.getElementById("root");
     if (!root) return;
@@ -115,6 +160,13 @@ const SlotMachine = () => {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     localStorage.setItem("soundEnabled", String(newValue));
+    
+    // Toca um som de teste quando ativa
+    if (newValue) {
+      createProceduralSound('click');
+    } else {
+      stopAllSounds();
+    }
   };
 
   // Easter eggs baseados no número de giros
@@ -141,7 +193,10 @@ const SlotMachine = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={toggleEffects}
+            onClick={() => {
+              toggleEffects();
+              createProceduralSound('click');
+            }}
             className={`px-4 py-2 rounded-lg font-semibold transition-all ${
               effectsEnabled
                 ? "bg-green-600 hover:bg-green-700"
@@ -179,6 +234,7 @@ const SlotMachine = () => {
                 symbols={reel}
                 isSpinning={isSpinning}
                 delay={index * 300}
+                soundEnabled={soundEnabled}
               />
             ))}
           </div>
