@@ -33,7 +33,7 @@ const SlotMachine = () => {
   const [showWinExplosion, setShowWinExplosion] = useState(false);
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [lastWin, setLastWin] = useState(0);
-  
+
   const { createProceduralSound } = useSound(soundEnabled, effectsVolume);
   const { setMusicVolume } = useBackgroundMusic(soundEnabled, backgroundVolume);
 
@@ -43,20 +43,25 @@ const SlotMachine = () => {
     const savedSound = localStorage.getItem("soundEnabled");
     const savedEffectsVolume = localStorage.getItem("effectsVolume");
     const savedBackgroundVolume = localStorage.getItem("backgroundVolume");
-    
+
     if (savedEffects !== null) setEffectsEnabled(savedEffects === "true");
     if (savedSound !== null) setSoundEnabled(savedSound === "true");
-    if (savedEffectsVolume !== null) setEffectsVolume(Number(savedEffectsVolume));
-    if (savedBackgroundVolume !== null) setBackgroundVolume(Number(savedBackgroundVolume));
+    if (savedEffectsVolume !== null)
+      setEffectsVolume(Number(savedEffectsVolume));
+    if (savedBackgroundVolume !== null)
+      setBackgroundVolume(Number(savedBackgroundVolume));
   }, []);
 
-  const handleVolumeChange = (type: 'effects' | 'background', value: number) => {
-    if (type === 'effects') {
+  const handleVolumeChange = (
+    type: "effects" | "background",
+    value: number
+  ) => {
+    if (type === "effects") {
       setEffectsVolume(value);
-      localStorage.setItem('effectsVolume', String(value));
+      localStorage.setItem("effectsVolume", String(value));
     } else {
       setBackgroundVolume(value);
-      localStorage.setItem('backgroundVolume', String(value));
+      localStorage.setItem("backgroundVolume", String(value));
       setMusicVolume(value);
     }
   };
@@ -104,22 +109,22 @@ const SlotMachine = () => {
       // Mostra explosão e confete para vitórias
       if (result.severity === "win" || result.severity === "epic_win") {
         setShowWinExplosion(true);
-        setConfettiTrigger(prev => prev + 1);
+        setConfettiTrigger((prev) => prev + 1);
         setTimeout(() => setShowWinExplosion(false), 3000);
       }
 
       // Calcula o ganho/perda usando a nova função
       const payout = calculatePayout(result, bet);
-      
+
       if (payout > 0) {
         // Ganhou!
         setLastWin(payout);
         setBalance((prev) => prev + payout);
-        
+
         // Se for mega vitória, mostra animação especial
         if (result.severity === "epic_win") {
           setTimeout(() => {
-            setMessage(result.message + ` 💰 +$${payout}!`);
+            setMessage(result.message + ` 💰 +R$ ${payout}!`);
           }, 500);
         }
       } else if (payout < 0) {
@@ -206,11 +211,11 @@ const SlotMachine = () => {
     }
   }, [totalSpins]);
 
-  const adjustBet = (direction: 'up' | 'down') => {
-    if (direction === 'up' && bet < balance) {
-      setBet(prev => Math.min(prev + 10, 1000, balance));
-    } else if (direction === 'down' && bet > 10) {
-      setBet(prev => Math.max(prev - 10, 10));
+  const adjustBet = (direction: "up" | "down") => {
+    if (direction === "up" && bet < balance) {
+      setBet((prev) => Math.min(prev + 10, 1000, balance));
+    } else if (direction === "down" && bet > 10) {
+      setBet((prev) => Math.max(prev - 10, 10));
     }
   };
 
@@ -218,11 +223,14 @@ const SlotMachine = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url('/background.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url('/background.png')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
       </div>
 
       {/* Main Container */}
@@ -230,22 +238,24 @@ const SlotMachine = () => {
         {/* Header */}
         <div className="flex justify-between items-start p-4 sm:p-6">
           {/* Balance Display */}
-          <motion.div 
+          <motion.div
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 rounded-2xl p-4 backdrop-blur-sm border border-yellow-500/30 shadow-2xl"
           >
-            <div className="text-gray-400 text-sm font-semibold mb-1">SALDO</div>
+            <div className="text-gray-400 text-sm font-semibold mb-1">
+              SALDO
+            </div>
             <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
-              ${balance.toLocaleString()}
+              R$ {balance.toLocaleString('pt-BR')}
             </div>
             {lastWin > 0 && (
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className="text-yellow-400 text-sm mt-1"
               >
-                +${lastWin} 🎉
+                +R$ {lastWin.toLocaleString('pt-BR')} 🎉
               </motion.div>
             )}
           </motion.div>
@@ -262,18 +272,20 @@ const SlotMachine = () => {
         </div>
 
         {/* Title */}
-        <motion.div 
+        <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className="text-center mb-4"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-2" 
+          <h1
+            className="text-5xl sm:text-6xl md:text-7xl font-black mb-2"
             style={{
-              background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF6B00 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 0 60px rgba(255, 215, 0, 0.5)',
-              letterSpacing: '2px'
+              background:
+                "linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF6B00 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              textShadow: "0 0 60px rgba(255, 215, 0, 0.5)",
+              letterSpacing: "2px",
             }}
           >
             SLOT DOS BUGS
@@ -295,7 +307,7 @@ const SlotMachine = () => {
             >
               {/* Elephant Mascot behind and to the right */}
               <motion.div
-                className="absolute -right-20 sm:-right-28 md:-right-36 top-1/2 -translate-y-[75%] w-[26rem] sm:w-[30rem] md:w-[34rem] z-0"
+                className="absolute -right-20 sm:-right-28 md:-right-36 top-[150px] -translate-y-[75%] w-[26rem] sm:w-[30rem] md:w-[34rem] z-0"
                 initial={{ x: 200, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.5, type: "spring" }}
@@ -305,25 +317,31 @@ const SlotMachine = () => {
                   alt="ElePHPant"
                   className="w-full h-auto"
                   style={{
-                    filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.4))'
+                    filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.4))",
                   }}
                   animate={{
                     y: [0, -15, 0],
-                    rotate: [-3, 3, -3]
+                    rotate: [-3, 3, -3],
                   }}
                   transition={{
                     y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-                    rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+                    rotate: {
+                      duration: 5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    },
                   }}
                 />
-                
+
                 {/* Speech Bubble */}
                 <ElephantSpeechBubble />
               </motion.div>
               {/* Golden Frame */}
-              <div className="bg-gradient-to-b from-yellow-600 via-yellow-500 to-yellow-600 p-1 rounded-3xl shadow-2xl relative z-10"
+              <div
+                className="bg-gradient-to-b from-yellow-600 via-yellow-500 to-yellow-600 p-1 rounded-3xl shadow-2xl relative z-10"
                 style={{
-                  boxShadow: '0 0 60px rgba(255, 215, 0, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.3)'
+                  boxShadow:
+                    "0 0 60px rgba(255, 215, 0, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.3)",
                 }}
               >
                 {/* Inner Machine */}
@@ -355,132 +373,134 @@ const SlotMachine = () => {
                     animate={{ opacity: 1 }}
                     className="mt-6"
                   >
-                    <div className={`
+                    <div
+                      className={`
                       rounded-xl p-4 text-center font-bold text-lg
-                      ${currentCombo?.severity === "epic_win"
-                        ? "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white"
-                        : currentCombo?.severity === "win"
-                        ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
-                        : currentCombo?.severity === "epic_lose"
-                        ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
-                        : currentCombo?.severity === "lose"
-                        ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
-                        : "bg-slate-800/80 text-gray-300"
+                      ${
+                        currentCombo?.severity === "epic_win"
+                          ? "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white"
+                          : currentCombo?.severity === "win"
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                          : currentCombo?.severity === "epic_lose"
+                          ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
+                          : currentCombo?.severity === "lose"
+                          ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
+                          : "bg-slate-800/80 text-gray-300"
                       }
-                    `}>
+                    `}
+                    >
                       {message}
                     </div>
                   </motion.div>
                 </div>
               </div>
+              
+              {/* Game Controls - Directly below slot machine */}
+              <motion.div 
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="mt-8 flex items-center justify-center gap-6"
+              >
+                {/* Bet Controls */}
+                <div className="flex items-center gap-3 bg-slate-800/80 backdrop-blur-sm rounded-2xl p-2 border border-purple-500/30">
+                  <button
+                    onClick={() => adjustBet("down")}
+                    disabled={bet <= 10}
+                    className="w-12 h-12 rounded-full bg-gradient-to-b from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 flex items-center justify-center text-white text-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-600"
+                    style={{
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5)'
+                    }}
+                  >
+                    -
+                  </button>
+                  
+                  <div className="text-center px-4">
+                    <div className="text-xs text-gray-400 uppercase tracking-wider">Aposta</div>
+                    <div className="text-2xl font-black text-white">R$ {bet}</div>
+                  </div>
+                  
+                  <button
+                    onClick={() => adjustBet("up")}
+                    disabled={bet >= balance || bet >= 100}
+                    className="w-12 h-12 rounded-full bg-gradient-to-b from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 flex items-center justify-center text-white text-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-600"
+                    style={{
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5)'
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Spin Button */}
+                <motion.button
+                  onClick={spin}
+                  disabled={isSpinning || balance < bet}
+                  whileHover={!isSpinning && balance >= bet ? { scale: 1.05 } : {}}
+                  whileTap={!isSpinning && balance >= bet ? { scale: 0.95 } : {}}
+                  className={`
+                    relative overflow-hidden px-16 py-5 rounded-2xl font-black text-3xl
+                    transition-all duration-300 transform
+                    ${isSpinning || balance < bet
+                      ? "bg-gradient-to-b from-gray-600 to-gray-700 cursor-not-allowed text-gray-400"
+                      : "bg-gradient-to-b from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white"
+                    }
+                    border-4 ${isSpinning || balance < bet ? 'border-gray-500' : 'border-yellow-500/50'}
+                  `}
+                  style={{
+                    boxShadow: isSpinning || balance < bet 
+                      ? '0 10px 30px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3)'
+                      : '0 10px 40px rgba(255,0,0,0.6), 0 0 80px rgba(255,100,0,0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  {/* Animated shine effect */}
+                  {!isSpinning && balance >= bet && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      animate={{ x: [-300, 300] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+                  
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    {isSpinning ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          ⚙️
+                        </motion.span>
+                        RODANDO...
+                      </>
+                    ) : balance < bet ? (
+                      "SEM SALDO"
+                    ) : (
+                      <>
+                        🎰 RODAR 🎰
+                      </>
+                    )}
+                  </span>
+                </motion.button>
+              </motion.div>
             </motion.div>
           </div>
         </div>
 
-        {/* Bottom Controls */}
+        {/* Bottom Info */}
         <div className="p-4 sm:p-6 bg-gradient-to-t from-black/50 to-transparent">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between gap-4">
-              {/* Bet Controls */}
-              <motion.div 
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3 flex items-center gap-2"
-              >
-                <button
-                  onClick={() => adjustBet('down')}
-                  disabled={bet <= 10}
-                  className="text-2xl p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  ➖
-                </button>
-                <div className="text-center px-3">
-                  <div className="text-xs text-gray-400">APOSTA</div>
-                  <div className="text-xl font-bold text-white">${bet}</div>
-                </div>
-                <button
-                  onClick={() => adjustBet('up')}
-                  disabled={bet >= balance}
-                  className="text-2xl p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  ➕
-                </button>
-              </motion.div>
-
-              {/* Spin Button */}
-              <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.5 }}
-                onClick={spin}
-                disabled={isSpinning || balance < bet}
-                whileHover={!isSpinning && balance >= bet ? { scale: 1.05 } : {}}
-                whileTap={!isSpinning && balance >= bet ? { scale: 0.95 } : {}}
-                className={`
-                  relative overflow-hidden px-12 py-5 rounded-2xl font-black text-2xl
-                  transition-all duration-300 transform
-                  ${isSpinning || balance < bet
-                    ? "bg-gray-600 cursor-not-allowed text-gray-400"
-                    : "bg-gradient-to-b from-red-500 to-red-700 text-white hover:from-red-600 hover:to-red-800"
-                  }
-                `}
-                style={{
-                  boxShadow: isSpinning || balance < bet
-                    ? '0 10px 30px rgba(0,0,0,0.5)'
-                    : '0 10px 40px rgba(255,0,0,0.6), 0 0 60px rgba(255,100,0,0.4)',
-                }}
-              >
-                {/* Animated shine effect */}
-                {!isSpinning && balance >= bet && (
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                    animate={{ x: [-200, 200] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                )}
-                
-                <span className="relative z-10 flex items-center gap-2">
-                  {isSpinning ? (
-                    <>
-                      <motion.span
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      >
-                        ⚙️
-                      </motion.span>
-                      RODANDO...
-                    </>
-                  ) : balance < bet ? (
-                    "SEM SALDO"
-                  ) : (
-                    <>
-                      🎰 RODAR 🎰
-                    </>
-                  )}
-                </span>
-              </motion.button>
-
-              {/* Auto Play (disabled) */}
-              <motion.div 
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-3"
-              >
-                <button className="text-gray-500 p-2" disabled>
-                  <div className="text-2xl">🔄</div>
-                  <div className="text-xs">AUTO</div>
-                </button>
-              </motion.div>
-            </div>
-
             {/* Combos Info */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
               className="mt-4 text-center"
             >
-              <div className="text-xs text-gray-400 mb-2">Combinações especiais:</div>
+              <div className="text-xs text-gray-400 mb-2">
+                Combinações especiais:
+              </div>
               <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-300">
                 <span>🔥🔥🔥 = Servidor caiu</span>
                 <span>🐞🐞🔧 = Deploy sexta</span>
@@ -509,14 +529,17 @@ const SlotMachine = () => {
         effectsVolume={effectsVolume}
         backgroundVolume={backgroundVolume}
       />
-      
+
       {/* Confetti Effect */}
-      <Confetti trigger={confettiTrigger > 0} type={currentCombo?.severity as 'win' | 'epic_win'} />
-      
+      <Confetti
+        trigger={confettiTrigger > 0}
+        type={currentCombo?.severity as "win" | "epic_win"}
+      />
+
       {/* Win Explosion */}
-      <WinExplosion 
-        show={showWinExplosion} 
-        message={currentCombo?.message || ""} 
+      <WinExplosion
+        show={showWinExplosion}
+        message={currentCombo?.message || ""}
         severity={currentCombo?.severity}
       />
     </div>

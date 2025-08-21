@@ -80,6 +80,64 @@ const WinExplosion = ({ show, message, severity }: WinExplosionProps) => {
               />
             ))}
 
+            {/* Elefante Win atrás da mensagem */}
+            <motion.div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-5 ${
+                isEpic ? 'w-[35rem] h-[35rem]' : 'w-[25rem] h-[25rem]'
+              }`}
+              initial={{ scale: 0, opacity: 0, rotate: -360 }}
+              animate={{ 
+                scale: [0, 1.3, 1],
+                opacity: [0, 0.9, 0.7],
+                rotate: 0
+              }}
+              transition={{ 
+                duration: 1.2,
+                times: [0, 0.6, 1],
+                ease: "easeOut"
+              }}
+            >
+              <motion.img
+                src="/elefante-win.webp"
+                alt="ElePHPant Winner"
+                className="w-full h-full object-contain"
+                style={{
+                  filter: isEpic 
+                    ? 'drop-shadow(0 0 80px rgba(255, 215, 0, 1)) drop-shadow(0 0 40px rgba(255, 100, 0, 0.8))'
+                    : 'drop-shadow(0 0 50px rgba(34, 197, 94, 0.8)) drop-shadow(0 0 30px rgba(34, 197, 94, 0.5))'
+                }}
+                animate={{
+                  y: [0, -30, 0],
+                  rotate: isEpic ? [0, 5, -5, 0] : [0, 3, -3, 0]
+                }}
+                transition={{
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                  rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                }}
+              />
+              
+              {/* Texto PHP WIN no peito do elefante */}
+              <motion.div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                animate={{
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <h3 className={`font-black ${isEpic ? 'text-6xl' : 'text-4xl'} text-white`}
+                  style={{
+                    textShadow: '0 0 30px rgba(255,255,255,0.9), 0 4px 8px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  PHP WIN!
+                </h3>
+              </motion.div>
+            </motion.div>
+
             {/* Mensagem principal */}
             <motion.div
               className="relative z-10"
