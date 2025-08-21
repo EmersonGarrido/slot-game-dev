@@ -105,13 +105,56 @@ export const useSound = (enabled: boolean = true, volume: number = 0.5) => {
         break;
 
       case 'win':
-        oscillator.frequency.setValueAtTime(440, ctx.currentTime);
-        oscillator.frequency.setValueAtTime(554, ctx.currentTime + 0.1);
-        oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.3 * volume, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.5);
+        // Som de moedas caindo - múltiplas frequências altas simulando tilintares
+        for (let i = 0; i < 8; i++) {
+          const coinOsc = ctx.createOscillator();
+          const coinGain = ctx.createGain();
+          const coinFilter = ctx.createBiquadFilter();
+          
+          coinOsc.connect(coinFilter);
+          coinFilter.connect(coinGain);
+          coinGain.connect(ctx.destination);
+          
+          // Frequências altas variadas para simular moedas
+          const baseFreq = 2000 + Math.random() * 2000;
+          coinOsc.frequency.setValueAtTime(baseFreq, ctx.currentTime + i * 0.1);
+          coinOsc.frequency.exponentialRampToValueAtTime(
+            baseFreq * 0.3, 
+            ctx.currentTime + i * 0.1 + 0.3
+          );
+          
+          // Tipo de onda triangular para som mais metálico
+          coinOsc.type = 'triangle';
+          
+          // Filtro para som mais realista
+          coinFilter.type = 'highpass';
+          coinFilter.frequency.value = 1500;
+          coinFilter.Q.value = 10;
+          
+          // Volume decrescente
+          coinGain.gain.setValueAtTime(0.15 * volume, ctx.currentTime + i * 0.1);
+          coinGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
+          
+          coinOsc.start(ctx.currentTime + i * 0.1);
+          coinOsc.stop(ctx.currentTime + i * 0.1 + 0.3);
+        }
+        
+        // Som adicional de "caixa registradora" 
+        const cashOsc = ctx.createOscillator();
+        const cashGain = ctx.createGain();
+        
+        cashOsc.connect(cashGain);
+        cashGain.connect(ctx.destination);
+        
+        cashOsc.frequency.setValueAtTime(880, ctx.currentTime);
+        cashOsc.frequency.setValueAtTime(1100, ctx.currentTime + 0.05);
+        cashOsc.type = 'sine';
+        
+        cashGain.gain.setValueAtTime(0.2 * volume, ctx.currentTime);
+        cashGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        
+        cashOsc.start(ctx.currentTime);
+        cashOsc.stop(ctx.currentTime + 0.2);
         break;
 
       case 'lose':

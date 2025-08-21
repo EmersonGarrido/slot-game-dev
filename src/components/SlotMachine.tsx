@@ -7,11 +7,66 @@ import WinExplosion from "./WinExplosion";
 import ElephantSpeechBubble from "./ElephantSpeechBubble";
 import SecretTerminal from "./SecretTerminal";
 import TerminalMode from "./TerminalMode";
+import AgiotaModal from "./AgiotaModal";
 import { evaluateResult, calculatePayout } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
 import { useBackgroundMusic } from "../hooks/useBackgroundMusic";
 import type { SlotSymbol, ComboResult } from "../types/slot";
+
+const frasesDesmotivacionais = [
+  "💀 Nem o console.log te salva mais.",
+  "💀 Bugou? Bem-vindo ao normal.",
+  "💀 Deploy na sexta, azar garantido.",
+  "💀 O Jenkins já desistiu de você.",
+  "💀 Se rodar na sua máquina, não significa nada.",
+  "💀 A task fácil virou um épico.",
+  "💀 Prod caiu, mas o cliente não.",
+  "💀 O rollback também falhou.",
+  "💀 O bug te escolheu.",
+  "💀 Essa exception é sua nova feature.",
+  "💀 O prazo era ontem.",
+  "💀 Nem o Stack Overflow tem resposta.",
+  "💀 O Wi-Fi caiu, mas o prazo continua.",
+  "💀 Você corrigiu o bug errado.",
+  "💀 Esse commit vai te assombrar.",
+  "💀 O merge conflict venceu você.",
+  "💀 O estagiário já sabia disso.",
+  "💀 Não tem log.",
+  "💀 O backup nunca existiu.",
+  "💀 Esse erro é intermitente.",
+  "💀 O cliente descobriu antes do QA.",
+  "💀 O bug só acontece em produção.",
+  "💀 Tudo funciona… menos quando importa.",
+  "💀 Hoje é feriado no servidor.",
+  "💀 Você esqueceu o ;",
+  "💀 O cron job não rodou.",
+  "💀 Esse 'fix' vai quebrar mais coisas.",
+  "💀 O front e o back não se falam.",
+  "💀 Essa lib não tem manutenção desde 2015.",
+  "💀 Você empurrou na branch errada.",
+  "💀 Mais uma daily inútil amanhã.",
+  "💀 O PO adicionou 'só um detalhezinho'.",
+  "💀 O bug voltou das férias.",
+  "💀 Kernel Panic te abraçou.",
+  "💀 A call poderia ser um e-mail.",
+  "💀 O Jira caiu.",
+  "💀 O cache nunca expira.",
+  "💀 Essa query vai derrubar o banco.",
+  "💀 O cliente pediu IE11.",
+  "💀 A API de terceiros mudou sem avisar.",
+  "💀 Seu teste unitário é inútil.",
+  "💀 Esse código vai pro Hall da Vergonha.",
+  "💀 O deploy automático não é tão automático.",
+  "💀 O pagamento não vai cair hoje.",
+  "💀 A sprint já está perdida.",
+  "💀 Esse hotfix vai virar feature.",
+  "💀 O bug é eterno.",
+  "💀 Você vai sonhar com esse erro.",
+  "💀 Tudo parece normal… até o próximo bug.",
+  "💀 Respira: segunda tem mais.",
+  "💀 Mesmo se eu tentasse eu ainda seria melhor que você."
+];
 
 const SlotMachine = () => {
   const [reels, setReels] = useState<SlotSymbol[][]>([
@@ -36,6 +91,11 @@ const SlotMachine = () => {
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [lastWin, setLastWin] = useState(0);
   const [terminalMode, setTerminalMode] = useState(false);
+  const [showAgiotaModal, setShowAgiotaModal] = useState(false);
+  const [secretCommandCount, setSecretCommandCount] = useState(0);
+  const [loanDebt, setLoanDebt] = useState(0);
+  const [hackerWinChance, setHackerWinChance] = useState<number | null>(null);
+  const [physicsEnabled, setPhysicsEnabled] = useState(false);
 
   const { createProceduralSound } = useSound(soundEnabled, effectsVolume);
   const { setMusicVolume } = useBackgroundMusic(soundEnabled, backgroundVolume);
@@ -46,6 +106,8 @@ const SlotMachine = () => {
     const savedSound = localStorage.getItem("soundEnabled");
     const savedEffectsVolume = localStorage.getItem("effectsVolume");
     const savedBackgroundVolume = localStorage.getItem("backgroundVolume");
+    const savedSecretCount = localStorage.getItem("secretCommandCount");
+    const savedLoanDebt = localStorage.getItem("loanDebt");
 
     if (savedEffects !== null) setEffectsEnabled(savedEffects === "true");
     if (savedSound !== null) setSoundEnabled(savedSound === "true");
@@ -53,6 +115,10 @@ const SlotMachine = () => {
       setEffectsVolume(Number(savedEffectsVolume));
     if (savedBackgroundVolume !== null)
       setBackgroundVolume(Number(savedBackgroundVolume));
+    if (savedSecretCount !== null)
+      setSecretCommandCount(Number(savedSecretCount));
+    if (savedLoanDebt !== null)
+      setLoanDebt(Number(savedLoanDebt));
   }, []);
 
   const handleVolumeChange = (
@@ -88,7 +154,13 @@ const SlotMachine = () => {
   };
 
   const spin = () => {
-    if (isSpinning || balance < bet) return;
+    if (isSpinning) return;
+    
+    // Verifica se tem saldo suficiente
+    if (balance < bet) {
+      setShowAgiotaModal(true);
+      return;
+    }
 
     // Som de click do botão
     createProceduralSound("click");
@@ -104,10 +176,61 @@ const SlotMachine = () => {
     createProceduralSound("spin");
 
     // Gera os novos símbolos IMEDIATAMENTE (antes da animação)
-    const newReels: SlotSymbol[][] = [];
-    for (let i = 0; i < 5; i++) {
-      const reel = rng.getSymbols(3);
-      newReels.push(reel);
+    let newReels: SlotSymbol[][] = [];
+    
+    // Se modo hacker está ativo, manipula o resultado
+    if (hackerWinChance !== null) {
+      const shouldWin = Math.random() * 100 < hackerWinChance;
+      
+      if (hackerWinChance === 100) {
+        // 100% = sempre vitória épica
+        const epicSymbol = '💀' as SlotSymbol;
+        newReels = Array(5).fill([epicSymbol, epicSymbol, epicSymbol]);
+      } else if (shouldWin && hackerWinChance > 80) {
+        // Alta chance = vitória épica
+        const epicSymbol = ['🔧', '💀'][Math.floor(Math.random() * 2)] as SlotSymbol;
+        newReels = Array(5).fill([epicSymbol, epicSymbol, epicSymbol]);
+      } else if (shouldWin && hackerWinChance > 0) {
+        // Vitória normal
+        const winSymbol = ['🔥', '💾', '☕'][Math.floor(Math.random() * 3)] as SlotSymbol;
+        for (let i = 0; i < 5; i++) {
+          if (i < 3) {
+            newReels.push([winSymbol, winSymbol, winSymbol]);
+          } else {
+            newReels.push(rng.getSymbols(3));
+          }
+        }
+      } else {
+        // Força perda garantida - padrão específico que nunca ganha
+        // Usa um padrão alternado que garante que nunca há 3 símbolos iguais em linha
+        const pattern1: SlotSymbol[] = ['🐞', '🔥', '💾'];
+        const pattern2: SlotSymbol[] = ['🔧', '☕', '💀'];
+        
+        for (let i = 0; i < 5; i++) {
+          const reel: SlotSymbol[] = [];
+          // Alterna padrões para garantir que nunca há combinação
+          if (i % 2 === 0) {
+            reel.push(pattern1[0]);
+            reel.push(pattern2[1]);
+            reel.push(pattern1[2]);
+          } else {
+            reel.push(pattern2[0]);
+            reel.push(pattern1[1]);
+            reel.push(pattern2[2]);
+          }
+          // Rotaciona os padrões para mais variedade
+          pattern1.push(pattern1.shift()!);
+          pattern2.push(pattern2.shift()!);
+          
+          newReels.push(reel);
+        }
+      }
+    } else {
+      // Modo normal
+      for (let i = 0; i < 5; i++) {
+        const reel = rng.getSymbols(3);
+        newReels.push(reel);
+      }
     }
 
     // Atualiza os reels ANTES da animação começar
@@ -149,13 +272,23 @@ const SlotMachine = () => {
             setMessage(result.message + ` 💰 +R$ ${payout}!`);
           }, 500);
         }
-      } else if (payout < 0) {
-        // Perda épica (perde mais que a aposta)
-        const loss = Math.abs(payout);
-        setBalance((prev) => Math.max(0, prev - loss));
-        if (balance <= loss) {
-          setMessage(result.message + " 💀 GAME OVER!");
-          setBalance(0);
+      } else if (result.severity === "lose" || result.severity === "epic_lose") {
+        // Escolhe uma frase desmotivacional aleatória
+        const fraseDesmotivacional = frasesDesmotivacionais[Math.floor(Math.random() * frasesDesmotivacionais.length)];
+        setMessage(fraseDesmotivacional);
+        setLastWin(0);
+        
+        if (result.severity === "epic_lose") {
+          // Perda épica (perde mais que a aposta)
+          const loss = Math.abs(payout);
+          setBalance((prev) => Math.max(0, prev - loss));
+          if (balance <= loss) {
+            setBalance(0);
+            // Mostra o modal do agiota após um pequeno delay
+            setTimeout(() => {
+              setShowAgiotaModal(true);
+            }, 1000);
+          }
         }
       } else if (result.severity === "neutral") {
         // Neutro - devolve metade
@@ -247,6 +380,45 @@ const SlotMachine = () => {
     }
   };
 
+  const handleAgiotaLoan = (amount: number, interest: number) => {
+    const totalDebt = amount + (amount * interest) / 100;
+    setBalance(prev => prev + amount);
+    setLoanDebt(prev => prev + totalDebt);
+    localStorage.setItem("loanDebt", String(loanDebt + totalDebt));
+    setShowAgiotaModal(false);
+    setMessage(`Empréstimo de R$ ${amount} aprovado! Dívida total: R$ ${totalDebt}`);
+    createProceduralSound("win");
+  };
+
+  const handleSecretCommand = (command: string) => {
+    if (command.toLowerCase() === "faz o l") {
+      if (secretCommandCount >= 13) {
+        setMessage("🚫 Não pode mais! Quando tivemos a chance de estocar vento, nós não fizemos isso!");
+        return { 
+          success: false, 
+          message: "Limite de 13 usos atingido! Deveria ter estocado vento quando teve a chance!" 
+        };
+      }
+
+      setBalance(prev => prev + 1000);
+      setSecretCommandCount(prev => {
+        const newCount = prev + 1;
+        localStorage.setItem("secretCommandCount", String(newCount));
+        return newCount;
+      });
+      
+      createProceduralSound("win");
+      setMessage(`💰 +R$ 1000! (${13 - secretCommandCount - 1} usos restantes)`);
+      
+      return { 
+        success: true, 
+        message: `+R$ 1000 adicionado! Restam ${12 - secretCommandCount} usos do comando secreto.` 
+      };
+    }
+    
+    return null;
+  };
+
   if (terminalMode) {
     return (
       <TerminalMode
@@ -258,7 +430,7 @@ const SlotMachine = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className={`min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden ${physicsEnabled ? 'physics-mode' : ''}`}>
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div
@@ -559,8 +731,26 @@ const SlotMachine = () => {
         onComplete={() => setShowWinExplosion(false)}
       />
       
+      {/* Agiota Modal */}
+      <AgiotaModal
+        isOpen={showAgiotaModal}
+        onClose={() => setShowAgiotaModal(false)}
+        onAccept={handleAgiotaLoan}
+      />
+      
       {/* Secret Terminal */}
-      <SecretTerminal onActivateTerminalMode={() => setTerminalMode(true)} />
+      <SecretTerminal 
+        onActivateTerminalMode={() => setTerminalMode(true)}
+        onSecretCommand={handleSecretCommand}
+        onHackerMode={(chance) => {
+          setHackerWinChance(chance);
+          setMessage(`🔓 Modo Hacker: ${chance}% de vitória!`);
+        }}
+        onPhysicsMode={() => {
+          setPhysicsEnabled(true);
+          setTimeout(() => setPhysicsEnabled(false), 10000); // Desativa após 10 segundos
+        }}
+      />
     </div>
   );
 };

@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 
 interface SecretTerminalProps {
   onActivateTerminalMode: () => void;
+  onSecretCommand?: (command: string) => { success: boolean; message: string } | null;
+  onHackerMode?: (winChance: number) => void;
+  onPhysicsMode?: () => void;
 }
 
-const SecretTerminal: React.FC<SecretTerminalProps> = ({ onActivateTerminalMode }) => {
+const SecretTerminal: React.FC<SecretTerminalProps> = ({ onActivateTerminalMode, onSecretCommand, onHackerMode, onPhysicsMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>(['> Sistema iniciado...', '> Digite um comando...']);
@@ -42,9 +45,99 @@ const SecretTerminal: React.FC<SecretTerminalProps> = ({ onActivateTerminalMode 
     }
   }, [history]);
 
+  const [hackerMode, setHackerMode] = useState(false);
+  const [winChance, setWinChance] = useState(50);
+
   const handleCommand = (cmd: string) => {
     const trimmedCmd = cmd.trim().toLowerCase();
     const newHistory = [...history, `> ${cmd}`];
+
+    // Comando secreto do dinheiro
+    if (trimmedCmd === 'faz o l' && onSecretCommand) {
+      const result = onSecretCommand(cmd);
+      if (result) {
+        if (result.success) {
+          newHistory.push('[ SISTEMA ]: 💰💰💰 MONEY GLITCH ATIVADO! 💰💰💰');
+          newHistory.push(`[ SISTEMA ]: ${result.message}`);
+          newHistory.push('[ SISTEMA ]: "Aproveite enquanto dura..."');
+        } else {
+          newHistory.push('[ SISTEMA ]: ❌ ERRO CRÍTICO ❌');
+          newHistory.push(`[ SISTEMA ]: ${result.message}`);
+          newHistory.push('[ SISTEMA ]: "Quando tivemos a chance de estocar vento, nós não fizemos isso!"');
+        }
+        setHistory(newHistory);
+        return;
+      }
+    }
+
+    // Modo HACKER
+    if (trimmedCmd === 'ruyter' || trimmedCmd === 'virginia' || trimmedCmd === 'silvercop') {
+      if (!hackerMode) {
+        setHackerMode(true);
+        newHistory.push('[ SISTEMA ]: 🔓 MODO HACKER ATIVADO! 🔓');
+        newHistory.push('[ SISTEMA ]: "Você agora tem o controle do RNG!"');
+        newHistory.push('');
+        newHistory.push('COMANDOS HACKER:');
+        newHistory.push('  win [0-100]  - Define chance de vitória (%)');
+        newHistory.push('  apply        - Aplica as modificações');
+        newHistory.push('  reset        - Restaura valores padrões');
+        newHistory.push('');
+        newHistory.push(`[ STATUS ]: Chance de vitória atual: ${winChance}%`);
+      } else {
+        newHistory.push('[ SISTEMA ]: Modo hacker já está ativo!');
+      }
+      setHistory(newHistory);
+      return;
+    }
+
+    // Comandos do modo HACKER
+    if (hackerMode) {
+      if (trimmedCmd.startsWith('win ')) {
+        const chance = parseInt(trimmedCmd.split(' ')[1]);
+        if (!isNaN(chance) && chance >= 0 && chance <= 100) {
+          setWinChance(chance);
+          newHistory.push(`[ HACKER ]: Chance de vitória definida para ${chance}%`);
+          newHistory.push(`[ HACKER ]: Use 'apply' para aplicar as mudanças`);
+        } else {
+          newHistory.push('[ ERRO ]: Use um valor entre 0 e 100');
+        }
+        setHistory(newHistory);
+        return;
+      }
+
+      if (trimmedCmd === 'apply') {
+        if (onHackerMode) {
+          onHackerMode(winChance);
+          newHistory.push('[ HACKER ]: ✅ Modificações aplicadas!');
+          newHistory.push(`[ HACKER ]: Jogo manipulado com ${winChance}% de chance de vitória`);
+          newHistory.push('[ HACKER ]: Feche o terminal (ESC) e jogue!');
+        }
+        setHistory(newHistory);
+        return;
+      }
+
+      if (trimmedCmd === 'reset') {
+        setWinChance(50);
+        if (onHackerMode) {
+          onHackerMode(50);
+        }
+        newHistory.push('[ HACKER ]: Valores restaurados ao padrão');
+        setHistory(newHistory);
+        return;
+      }
+    }
+
+    // Comando FELCA - ativa física
+    if (trimmedCmd === 'felca') {
+      if (onPhysicsMode) {
+        onPhysicsMode();
+        newHistory.push('[ SISTEMA ]: 🌪️ GRAVIDADE ATIVADA! 🌪️');
+        newHistory.push('[ SISTEMA ]: "A física tomou conta do cassino!"');
+        newHistory.push('[ SISTEMA ]: "Tudo está caindo... LITERALMENTE!"');
+      }
+      setHistory(newHistory);
+      return;
+    }
 
     if (trimmedCmd === 'mano deyvin' || trimmedCmd === 'chorume') {
       newHistory.push('[ SISTEMA ]: Protocolo ANTI-FRONTEND ativado!');
@@ -63,6 +156,7 @@ const SecretTerminal: React.FC<SecretTerminalProps> = ({ onActivateTerminalMode 
       newHistory.push('  clear - Limpa o terminal');
       newHistory.push('  exit - Fecha o terminal');
       newHistory.push('  ?????? - Comandos secretos existem...');
+      newHistory.push('  [DICA]: Alguns comandos podem fazer o L...');
       setHistory(newHistory);
     } else if (trimmedCmd === 'clear') {
       setHistory(['> Sistema limpo...']);

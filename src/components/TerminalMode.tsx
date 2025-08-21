@@ -27,7 +27,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
       '[ JOGUE VIA TERMINAL AGORA! ]',
       '',
       '=================================================================',
-      `SALDO: $${balance.toFixed(2)}`,
+      `SALDO: R$ ${balance.toFixed(2)}`,
       '=================================================================',
       '',
       'COMANDOS:',
@@ -85,7 +85,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
         
         addOutput([
           '',
-          `[ APOSTANDO ]: $${betAmount.toFixed(2)}`,
+          `[ APOSTANDO ]: R$ ${betAmount.toFixed(2)}`,
           '[ GIRANDO ]: ░░░░░░░░░░'
         ]);
 
@@ -93,12 +93,12 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
           const result = onSpin();
           const displaySymbols = result.symbols.map(s => {
             switch(s) {
-              case '🍒': return 'CEREJA';
-              case '🍋': return 'LIMAO';
-              case '🍊': return 'LARANJA';
-              case '🍇': return 'UVA';
-              case '💎': return 'DIAMANTE';
-              case '7️⃣': return 'SETE';
+              case '🐞': return 'BUG';
+              case '🔥': return 'FIRE';
+              case '💾': return 'MEMORY';
+              case '🔧': return 'DEPLOY';
+              case '☕': return 'COFFEE';
+              case '💀': return 'DEATH';
               default: return s;
             }
           });
@@ -118,8 +118,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
             ]);
 
             if (result.won) {
-              const winAmount = betAmount * 10;
-              onUpdateBalance(winAmount);
+              onUpdateBalance(result.winAmount);
               addOutput([
                 '██╗   ██╗██╗████████╗ ██████╗ ██████╗ ██╗ █████╗ ██╗',
                 '██║   ██║██║╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗██║',
@@ -128,13 +127,13 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
                 ' ╚████╔╝ ██║   ██║   ╚██████╔╝██║  ██║██║██║  ██║██╗',
                 '  ╚═══╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝',
                 '',
-                `[ GANHOU ]: $${winAmount.toFixed(2)}!`,
-                `[ NOVO SALDO ]: $${(balance + winAmount - betAmount).toFixed(2)}`
+                `[ GANHOU ]: R$ ${result.winAmount.toFixed(2)}!`,
+                `[ NOVO SALDO ]: R$ ${(balance - betAmount + result.winAmount).toFixed(2)}`
               ]);
             } else {
               addOutput([
                 '[ PERDEU ]: Tente novamente!',
-                `[ NOVO SALDO ]: $${(balance - betAmount).toFixed(2)}`
+                `[ NOVO SALDO ]: R$ ${(balance - betAmount).toFixed(2)}`
               ]);
             }
 
@@ -146,7 +145,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
       case 'balance':
         addOutput([
           '',
-          `[ SALDO ATUAL ]: $${balance.toFixed(2)}`,
+          `[ SALDO ATUAL ]: R$ ${balance.toFixed(2)}`,
           ''
         ]);
         break;
@@ -155,7 +154,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
         addOutput([
           '',
           'COMANDOS DISPONÍVEIS:',
-          '  spin [valor]  - Gira o slot (padrão: $10)',
+          '  spin [valor]  - Gira o slot (padrão: R$ 10)',
           '  balance       - Mostra saldo atual',
           '  clear         - Limpa terminal',
           '  exit          - Volta ao modo visual',
@@ -166,7 +165,7 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
       case 'clear':
         setOutput([
           '[ TERMINAL LIMPO ]',
-          `[ SALDO ]: $${balance.toFixed(2)}`,
+          `[ SALDO ]: R$ ${balance.toFixed(2)}`,
           '> Aguardando comando...'
         ]);
         break;
@@ -187,6 +186,10 @@ const TerminalMode: React.FC<TerminalModeProps> = ({ balance, onSpin, onUpdateBa
     if (input.trim()) {
       handleCommand(input);
       setInput('');
+      // Mantém o foco no input após enviar o comando
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 

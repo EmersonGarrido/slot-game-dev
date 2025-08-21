@@ -1,0 +1,61 @@
+/* Efeito de física quando comando "felca" é ativado */
+@keyframes fallDown {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(200vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(10px);
+  }
+}
+
+.physics-mode {
+  animation: shake 0.5s;
+}
+
+.physics-mode .bg-gradient-to-r,
+.physics-mode .bg-gradient-to-b,
+.physics-mode button,
+.physics-mode img,
+.physics-mode .rounded-2xl,
+.physics-mode .rounded-3xl,
+.physics-mode .text-3xl,
+.physics-mode .text-4xl,
+.physics-mode .text-5xl,
+.physics-mode .text-6xl {
+  animation: fallDown 3s ease-in forwards;
+  animation-delay: calc(var(--delay, 0) * 0.1s);
+}
+
+.physics-mode > * > * {
+  --delay: 1;
+}
+
+.physics-mode > * > * > * {
+  --delay: 2;
+}
+
+.physics-mode > * > * > * > * {
+  --delay: 3;
+}
+
+.physics-mode > * > * > * > * > * {
+  --delay: 4;
+}
+
+/* Mantém o terminal visível */
+.physics-mode .fixed[style*="z-index: 9999"] {
+  animation: none !important;
+}
