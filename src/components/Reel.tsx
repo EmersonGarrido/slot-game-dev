@@ -35,7 +35,7 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
       // Inicia a animação após o delay
       setTimeout(() => {
         setIsAnimating(true);
-        setOffset(-60 * 15); // Move para mostrar os símbolos finais
+        setOffset(-70 * 15); // Move para mostrar os símbolos finais
       }, delay);
       
       // Som quando o rolo para
@@ -52,10 +52,10 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
 
   return (
     <div
-      className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg shadow-inner border-2 border-gray-700"
-      style={{ width: "90px" }}
+      className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg shadow-inner border-2 border-gray-700 
+                 w-[75px] sm:w-[85px] md:w-[95px] lg:w-[105px]"
     >
-      <div className="overflow-hidden h-[180px] relative">
+      <div className="overflow-hidden h-[150px] sm:h-[170px] md:h-[190px] lg:h-[210px] relative">
         <div
           className="flex flex-col"
           style={{
@@ -69,7 +69,9 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
           {displaySymbols.map((symbol, index) => (
             <div
               key={`${index}-${symbol}-${isSpinning}`}
-              className="h-[60px] flex items-center justify-center text-4xl"
+              className="h-[50px] sm:h-[56px] md:h-[63px] lg:h-[70px] 
+                         flex items-center justify-center 
+                         text-3xl sm:text-3xl md:text-4xl lg:text-5xl"
               style={{
                 filter:
                   isAnimating && index < displaySymbols.length - 3
@@ -83,8 +85,8 @@ const Reel = ({ symbols, isSpinning, delay, soundEnabled = true }: ReelProps) =>
         </div>
 
         {/* Gradientes para efeito de profundidade */}
-        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-gray-800 to-transparent pointer-events-none"></div>
-        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-x-0 top-0 h-6 sm:h-8 bg-gradient-to-b from-gray-800 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-x-0 bottom-0 h-6 sm:h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
       </div>
     </div>
   );

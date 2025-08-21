@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Reel from "./Reel";
+import SettingsModal from "./SettingsModal";
+import ElephantMascot from "./ElephantMascot";
 import { evaluateResult } from "../utils/rules";
 import { rng } from "../utils/rng";
 import { useSound } from "../hooks/useSound";
+import { useBackgroundMusic } from "../hooks/useBackgroundMusic";
 import type { SlotSymbol, ComboResult } from "../types/slot";
 
 const SlotMachine = () => {
@@ -20,15 +24,36 @@ const SlotMachine = () => {
   const [currentCombo, setCurrentCombo] = useState<ComboResult | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { stopAllSounds, createProceduralSound } = useSound(soundEnabled);
+  const [effectsVolume, setEffectsVolume] = useState(0.5);
+  const [backgroundVolume, setBackgroundVolume] = useState(0.3);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  const { stopAllSounds, createProceduralSound } = useSound(soundEnabled, effectsVolume);
+  const { setMusicVolume } = useBackgroundMusic(soundEnabled, backgroundVolume);
 
   // Carrega preferências salvas
   useEffect(() => {
     const savedEffects = localStorage.getItem("effectsEnabled");
     const savedSound = localStorage.getItem("soundEnabled");
+    const savedEffectsVolume = localStorage.getItem("effectsVolume");
+    const savedBackgroundVolume = localStorage.getItem("backgroundVolume");
+    
     if (savedEffects !== null) setEffectsEnabled(savedEffects === "true");
     if (savedSound !== null) setSoundEnabled(savedSound === "true");
+    if (savedEffectsVolume !== null) setEffectsVolume(Number(savedEffectsVolume));
+    if (savedBackgroundVolume !== null) setBackgroundVolume(Number(savedBackgroundVolume));
   }, []);
+
+  const handleVolumeChange = (type: 'effects' | 'background', value: number) => {
+    if (type === 'effects') {
+      setEffectsVolume(value);
+      localStorage.setItem('effectsVolume', String(value));
+    } else {
+      setBackgroundVolume(value);
+      localStorage.setItem('backgroundVolume', String(value));
+      setMusicVolume(value);
+    }
+  };
 
   const spin = () => {
     if (isSpinning) return;
@@ -52,12 +77,10 @@ const SlotMachine = () => {
     }
 
     // Atualiza os reels ANTES da animação começar
-    // Isso permite que o Reel component saiba qual será o resultado final
     setReels(newReels);
 
     // Processa o resultado após o tempo da animação
     setTimeout(() => {
-      // Avalia o resultado
       const result = evaluateResult(newReels);
       setCurrentCombo(result);
       setMessage(result.message);
@@ -89,33 +112,27 @@ const SlotMachine = () => {
   const playComboSound = (result: ComboResult) => {
     switch (result.type) {
       case "deploy_magico":
-        // Som épico de vitória
         createProceduralSound("win");
         setTimeout(() => createProceduralSound("win"), 200);
         setTimeout(() => createProceduralSound("win"), 400);
         break;
       case "overdose_cafe":
-        // Som de energia/cafe
         createProceduralSound("win");
         break;
       case "servidor_caindo":
       case "blue_screen_total":
-        // Som de alarme/erro crítico
         createProceduralSound("lose");
         setTimeout(() => createProceduralSound("lose"), 300);
         break;
       case "deploy_sexta":
       case "kernel_panic":
-        // Som de erro
         createProceduralSound("lose");
         break;
       case "promocao_estagiario":
-        // Som neutro/cômico
         createProceduralSound("click");
         setTimeout(() => createProceduralSound("click"), 100);
         break;
       default:
-        // Som neutro
         createProceduralSound("click");
     }
   };
@@ -124,7 +141,6 @@ const SlotMachine = () => {
     const root = document.getElementById("root");
     if (!root) return;
 
-    // Remove classes antigas
     root.className = "";
 
     switch (effect) {
@@ -144,9 +160,18 @@ const SlotMachine = () => {
         root.classList.add("shake-effect");
         setTimeout(() => root.classList.remove("shake-effect"), 1000);
         break;
-      case "yellow_banner":
-        // Handled by message display
-        break;
+    }
+  };
+
+  const toggleSound = () => {
+    const newValue = !soundEnabled;
+    setSoundEnabled(newValue);
+    localStorage.setItem("soundEnabled", String(newValue));
+
+    if (newValue) {
+      createProceduralSound("click");
+    } else {
+      stopAllSounds();
     }
   };
 
@@ -156,20 +181,7 @@ const SlotMachine = () => {
     localStorage.setItem("effectsEnabled", String(newValue));
   };
 
-  const toggleSound = () => {
-    const newValue = !soundEnabled;
-    setSoundEnabled(newValue);
-    localStorage.setItem("soundEnabled", String(newValue));
-
-    // Toca um som de teste quando ativa
-    if (newValue) {
-      createProceduralSound("click");
-    } else {
-      stopAllSounds();
-    }
-  };
-
-  // Easter eggs baseados no número de giros
+  // Easter eggs
   useEffect(() => {
     if (totalSpins === 100) {
       setMessage("Parabéns, você é oficialmente viciado!");
@@ -177,124 +189,177 @@ const SlotMachine = () => {
   }, [totalSpins]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-5xl">
-      {/* Stats Bar */}
-      <div className="flex items-center justify-between w-full mb-4 px-8">
-        <div className="flex items-center gap-4">
-          <div className="bg-gray-800 rounded-lg px-4 py-2">
-            <span className="text-gray-400 text-sm">Créditos: </span>
-            <span className="text-green-400 font-bold">{balance}</span>
-          </div>
-          <div className="bg-gray-800 rounded-lg px-4 py-2">
-            <span className="text-gray-400 text-sm">Giros: </span>
-            <span className="text-blue-400 font-bold">{totalSpins}</span>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              toggleEffects();
-              createProceduralSound("click");
+    <>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center w-full px-2 sm:px-4"
+      >
+        {/* Header - Mobile Optimized */}
+        <motion.div 
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring" }}
+          className="text-center mb-2 sm:mb-4"
+        >
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-1 sm:mb-2" 
+            style={{
+              background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF6B00 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 0 30px rgba(255, 215, 0, 0.5)',
             }}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              effectsEnabled
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-gray-600 hover:bg-gray-700"
-            }`}
           >
-            {effectsEnabled ? "✨ Efeitos ON" : "✨ Efeitos OFF"}
-          </button>
-          <button
-            onClick={toggleSound}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              soundEnabled
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-gray-600 hover:bg-gray-700"
-            }`}
-          >
-            {soundEnabled ? "🔊 Som ON" : "🔇 Som OFF"}
-          </button>
-        </div>
-      </div>
+            SLOT DOS BUGS
+          </h1>
+          <p className="text-cyan-300 text-xs sm:text-sm font-semibold animate-pulse">
+            🎰 Um jogo de zoeira para devs 🎰
+          </p>
+        </motion.div>
 
-      {/* Slot Machine */}
-      <div
-        className="bg-gradient-to-b from-black/80 to-purple-900/80 rounded-3xl p-6 shadow-2xl border-4 border-yellow-600 backdrop-blur-md"
-        style={{
-          boxShadow:
-            "0 0 50px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.2)",
-        }}
-      >
-        <div className="bg-gradient-to-b from-black/70 to-purple-900/70 rounded-2xl p-4 shadow-inner border-2 border-yellow-600/40">
-          <div className="flex justify-center gap-3 bg-gradient-to-b from-black/80 to-purple-900/80 rounded-xl p-4 border border-yellow-600/30">
-            {reels.map((reel, index) => (
-              <Reel
-                key={index}
-                symbols={reel}
-                isSpinning={isSpinning}
-                delay={index * 300}
-                soundEnabled={soundEnabled}
-              />
-            ))}
+        {/* Stats Bar - Mobile Optimized */}
+        <motion.div 
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-between w-full mb-2 sm:mb-4 gap-2"
+        >
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
+            <div className="bg-gray-800 rounded-lg px-3 py-1 sm:px-4 sm:py-2">
+              <span className="text-gray-400 text-xs sm:text-sm">Créditos: </span>
+              <span className="text-green-400 font-bold text-sm sm:text-base">{balance}</span>
+            </div>
+            <div className="bg-gray-800 rounded-lg px-3 py-1 sm:px-4 sm:py-2">
+              <span className="text-gray-400 text-xs sm:text-sm">Giros: </span>
+              <span className="text-blue-400 font-bold text-sm sm:text-base">{totalSpins}</span>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Message Display */}
-      <div
-        className={`w-full mt-6 px-8 ${
-          currentCombo?.effect === "yellow_banner" ? "animate-pulse" : ""
-        }`}
-      >
-        <div
-          className={`rounded-xl p-4 text-center font-bold text-lg transition-all ${
-            currentCombo?.severity === "epic_lose"
-              ? "bg-red-900 text-red-100"
-              : currentCombo?.severity === "lose"
-              ? "bg-orange-900 text-orange-100"
-              : currentCombo?.severity === "epic_win"
-              ? "bg-green-900 text-green-100"
-              : currentCombo?.severity === "win"
-              ? "bg-blue-900 text-blue-100"
-              : "bg-gray-800 text-gray-100"
+          <button
+            onClick={() => setShowSettings(true)}
+            className="bg-gray-700 hover:bg-gray-600 p-2 sm:p-3 rounded-lg transition-all"
+          >
+            <span className="text-xl sm:text-2xl">⚙️</span>
+          </button>
+        </motion.div>
+
+        {/* Slot Machine - Mobile Optimized */}
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.4, type: "spring" }}
+          className="bg-gradient-to-b from-black/80 to-purple-900/80 rounded-xl sm:rounded-2xl md:rounded-3xl p-2 sm:p-4 md:p-6 shadow-2xl border-2 sm:border-3 md:border-4 border-yellow-600 backdrop-blur-md w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl"
+          style={{
+            boxShadow: "0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 15px rgba(255, 215, 0, 0.2)",
+          }}
+        >
+          <div className="bg-gradient-to-b from-black/70 to-purple-900/70 rounded-lg sm:rounded-xl md:rounded-2xl p-1 sm:p-2 md:p-4 shadow-inner border border-yellow-600/40">
+            <div className="flex justify-center gap-[2px] sm:gap-1 md:gap-2 lg:gap-3 bg-gradient-to-b from-black/80 to-purple-900/80 rounded-md sm:rounded-lg md:rounded-xl p-1 sm:p-2 md:p-3 lg:p-4 border border-yellow-600/30">
+              {reels.map((reel, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ y: -50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  <Reel
+                    symbols={reel}
+                    isSpinning={isSpinning}
+                    delay={index * 300}
+                    soundEnabled={soundEnabled}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Message Display - Mobile Optimized */}
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className={`w-full mt-3 sm:mt-6 px-2 sm:px-8 ${
+            currentCombo?.effect === "yellow_banner" ? "animate-pulse" : ""
           }`}
         >
-          <p className="text-xl">{message}</p>
-        </div>
-      </div>
+          <div
+            className={`rounded-lg sm:rounded-xl p-2 sm:p-4 text-center font-bold text-sm sm:text-lg transition-all ${
+              currentCombo?.severity === "epic_lose"
+                ? "bg-red-900 text-red-100"
+                : currentCombo?.severity === "lose"
+                ? "bg-orange-900 text-orange-100"
+                : currentCombo?.severity === "epic_win"
+                ? "bg-green-900 text-green-100"
+                : currentCombo?.severity === "win"
+                ? "bg-blue-900 text-blue-100"
+                : "bg-gray-800 text-gray-100"
+            }`}
+          >
+            <p className="text-sm sm:text-xl">{message}</p>
+          </div>
+        </motion.div>
 
-      {/* Spin Button */}
-      <div className="mt-6">
-        <button
-          onClick={spin}
-          disabled={isSpinning}
-          className={`
-            ${
-              isSpinning
+        {/* Spin Button - Mobile Optimized */}
+        <motion.div 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.7, type: "spring" }}
+          className="mt-3 sm:mt-6 w-full flex justify-center"
+        >
+          <button
+            onClick={spin}
+            disabled={isSpinning}
+            className={`
+              ${isSpinning
                 ? "bg-gradient-to-b from-gray-600 to-gray-700 cursor-not-allowed"
                 : "bg-gradient-to-b from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 transform hover:scale-105"
-            }
-            text-white text-3xl font-black py-6 px-20 rounded-2xl transition-all duration-200 shadow-2xl border-4 border-yellow-600
-          `}
-        >
-          {isSpinning ? "DEPLOYANDO..." : "RODAR"}
-        </button>
-      </div>
+              }
+              text-white text-lg sm:text-2xl md:text-3xl font-black py-2 sm:py-4 md:py-6 px-8 sm:px-12 md:px-20 rounded-lg sm:rounded-xl md:rounded-2xl transition-all duration-200 shadow-2xl border-2 sm:border-3 md:border-4 border-yellow-600 w-full sm:w-auto max-w-[200px] sm:max-w-xs
+            `}
+          >
+            {isSpinning ? "DEPLOYANDO..." : "RODAR"}
+          </button>
+        </motion.div>
 
-      {/* Info Panel */}
-      <div className="mt-8 text-center text-gray-400 text-sm max-w-2xl">
-        <p className="mb-2 font-bold text-gray-300">Combinações especiais:</p>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>🔥🔥🔥 = Servidor caiu (GG)</div>
-          <div>🐞🐞🔧 = Deploy sexta (perdeu tudo)</div>
-          <div>💾💾💾 = Kernel Panic</div>
-          <div>🔧🔧🔧 = Deploy mágico! (+500)</div>
-          <div>☕☕☕ = Overdose cafeína (+100)</div>
-          <div>💀💀💀 = Blue Screen Total (RIP)</div>
-        </div>
-      </div>
-    </div>
+        {/* Info Panel - Mobile Hidden on Small Screens */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="hidden sm:block mt-6 sm:mt-8 text-center text-gray-400 text-xs sm:text-sm max-w-2xl"
+        >
+          <p className="mb-2 font-bold text-gray-300">Combinações especiais:</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2 text-xs">
+            <div>🔥🔥🔥 = Servidor caiu</div>
+            <div>🐞🐞🔧 = Deploy sexta</div>
+            <div>💾💾💾 = Kernel Panic</div>
+            <div>🔧🔧🔧 = Deploy mágico!</div>
+            <div>☕☕☕ = Overdose cafeína</div>
+            <div>💀💀💀 = Blue Screen</div>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        soundEnabled={soundEnabled}
+        setSoundEnabled={(value) => {
+          setSoundEnabled(value);
+          localStorage.setItem("soundEnabled", String(value));
+        }}
+        effectsEnabled={effectsEnabled}
+        setEffectsEnabled={toggleEffects}
+        onVolumeChange={handleVolumeChange}
+        effectsVolume={effectsVolume}
+        backgroundVolume={backgroundVolume}
+      />
+      
+      {/* Elephant Mascot */}
+      <ElephantMascot />
+    </>
   );
 };
 

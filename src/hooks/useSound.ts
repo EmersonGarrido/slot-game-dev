@@ -98,7 +98,7 @@ export const useSound = (enabled: boolean = true) => {
       case 'spin':
         oscillator.frequency.setValueAtTime(200, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.5);
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.3 * volume, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
@@ -108,7 +108,7 @@ export const useSound = (enabled: boolean = true) => {
         oscillator.frequency.setValueAtTime(440, ctx.currentTime);
         oscillator.frequency.setValueAtTime(554, ctx.currentTime + 0.1);
         oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.3 * volume, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
@@ -117,7 +117,7 @@ export const useSound = (enabled: boolean = true) => {
       case 'lose':
         oscillator.frequency.setValueAtTime(300, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.3 * volume, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.5);
